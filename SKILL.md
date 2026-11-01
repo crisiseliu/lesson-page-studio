@@ -1,7 +1,7 @@
 ---
 name: lesson-page-studio
 description: 在既有「单页自包含」学习站模板上生产新课页面、分享卡与宣传海报，并发布到 EdgeOne Pages 与 GitHub/Vercel。适用于：给现有学习站新增一课/一天、在同一模板上开新科目系列、重做某天海报或学习记录卡、批量补发漏课。触发词：新增一课、加一天课程、生成学习页面、生成海报、学习记录卡、补课、学习网站新内容、lesson page。
-version: 1.2.0
+version: 1.2.1
 agent_created: true
 ---
 

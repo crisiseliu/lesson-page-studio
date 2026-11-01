@@ -160,11 +160,13 @@ def main() -> int:
 
     # --- 5. Git ---
     git = shutil.which("git")
+    is_repo = False
     if git:
         add(OK, "git", shutil.which("git"))
         if root:
             code, _ = run(["git", "rev-parse", "--is-inside-work-tree"], cwd=root)
             if code == 0:
+                is_repo = True
                 _, remote = run(["git", "remote", "get-url", "origin"], cwd=root)
                 expect = _config.deep(cfg, "deploy", "git_remote_contains")
                 if expect and expect not in remote:
@@ -205,7 +207,7 @@ def main() -> int:
     can_verify = can_clone and bool(node)
     can_regress = can_verify and has_playwright and bool(browser)
     can_poster = can_regress and has_qrcode
-    can_git = bool(git) and root is not None
+    can_git = bool(git) and is_repo
     can_edgeone = bool(edgeone)
 
     print("\n" + "-" * 62)
@@ -217,7 +219,7 @@ def main() -> int:
         ("第3步 静态体检", can_verify, "无 Node：标签/ID/资源检查可用，内联 JS 语法检查跳过"),
         ("第4步 浏览器回归", can_regress, "缺 playwright-core 或浏览器：跳过截图与导出验证"),
         ("第5步 海报与分享卡", can_poster, "缺 qrcode：海报可出但无二维码"),
-        ("第6a步 git/Vercel", can_git, "缺 git 或远程仓库"),
+        ("第6a步 git/Vercel", can_git, "缺 git，或该目录不是 git 仓库"),
         ("第6b步 EdgeOne", can_edgeone, "缺 CLI 或未登录"),
     ]
     for name, ok, why in steps:
