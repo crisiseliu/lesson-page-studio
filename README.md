@@ -4,7 +4,7 @@
 
 适用于任何"一课一个 HTML、内联 CSS/JS、Canvas 导出"的静态学习站，不限主题。
 
-仓库：<https://github.com/crisiseliu/lesson-page-studio> ｜ 版本：v1.1.0 ｜ 许可：MIT
+仓库：<https://github.com/crisiseliu/lesson-page-studio> ｜ 版本：v1.2.0 ｜ 许可：MIT
 
 ---
 
@@ -35,9 +35,20 @@ git clone https://github.com/crisiseliu/lesson-page-studio.git ~/.workbuddy/skil
 
 ## 60 秒上手
 
+**先验证技能能用**（不碰你的项目）：
+
 ```bash
 cd ~/.workbuddy/skills/lesson-page-studio
+python scripts/selftest.py
+```
 
+它把 `demo/` 复制到临时目录，跑一遍「克隆 Day1 → Day2 → 体检」，逐项打印结果后自动清理。全 ✅ 再往下走。
+
+也可以直接双击 `demo/demo-site/day1.html` 看模板长什么样（上传照片、勾选、导出都能用）。
+
+**再接自己的项目**：
+
+```bash
 # 1) 生成配置：复制模板到你自己的项目根目录
 cp scripts/config.example.json <项目根目录>/lesson-studio.json
 
@@ -83,8 +94,13 @@ python scripts/verify_site.py --config <项目根目录>/lesson-studio.json
 lesson-page-studio/
 ├── SKILL.md                        # 技能主文档（AI 读这个）
 ├── README.md                       # 本文件（人读这个）
+├── demo/
+│   ├── README.md                   # demo 玩法说明
+│   ├── lesson-studio.json          # demo 专用配置
+│   └── demo-site/                  # 示例站（day1.html + index.html + favicon）
 ├── scripts/
 │   ├── preflight.py                # 环境与依赖自检 + 能力矩阵
+│   ├── selftest.py                 # 技能自检（demo 全链路，用临时目录）
 │   ├── clone_lesson.py             # 克隆上一课 + 机械替换 + 首页插卡
 │   ├── verify_site.py              # 站点体检
 │   ├── _config.py                  # 配置读取（命令行 > 配置 > 默认）
@@ -134,5 +150,6 @@ lesson-page-studio/
 
 ## 版本
 
+- **1.2.0** —— 新增 `demo/` 可跑示例站与 `scripts/selftest.py` 全链路自检（9 项断言，临时目录，不碰真实项目）。
 - **1.1.0** —— 配置驱动（`lesson-studio.json`）、新增 `preflight.py` 能力矩阵、脚本去掉硬编码路径与域名、降级路径成文、前缀替换自检提示。
 - **1.0.0** —— 首版：克隆 + 体检 + 海报 + 双站发布流水线。

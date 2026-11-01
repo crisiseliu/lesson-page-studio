@@ -4,3 +4,8 @@ __pycache__/
 Thumbs.db
 *.log
 node_modules/
+
+# demo 里手动演练时生成的页面（避免误提交）
+demo/demo-site/day2.html
+demo/demo-site/day[3-9].html
+demo/demo-site/day[1-9][0-9].html

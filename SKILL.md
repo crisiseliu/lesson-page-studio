@@ -1,7 +1,7 @@
 ---
 name: lesson-page-studio
 description: 在既有「单页自包含」学习站模板上生产新课页面、分享卡与宣传海报，并发布到 EdgeOne Pages 与 GitHub/Vercel。适用于：给现有学习站新增一课/一天、在同一模板上开新科目系列、重做某天海报或学习记录卡、批量补发漏课。触发词：新增一课、加一天课程、生成学习页面、生成海报、学习记录卡、补课、学习网站新内容、lesson page。
-version: 1.1.0
+version: 1.2.0
 agent_created: true
 ---
 
@@ -26,6 +26,12 @@ agent_created: true
 cp scripts/config.example.json <项目根目录>/lesson-studio.json
 # 改三处必填：project_root、site_dir、site_url
 python scripts/preflight.py --config <项目根目录>/lesson-studio.json
+```
+
+**第一次用先跑技能自检**（用 demo，不碰你的项目）：
+
+```bash
+python scripts/selftest.py          # 9 项断言：克隆 + 替换 + 体检
 ```
 
 `preflight.py` 输出两项结论：
@@ -140,7 +146,8 @@ cd <site_dir> && PAGES_SOURCE=skills edgeone pages deploy -n <项目名> -a over
 
 ## 资源索引
 
-- `scripts/preflight.py` —— 环境与依赖自检 + 能力矩阵（**第一步先跑**）
+- `scripts/selftest.py` —— 技能自检：demo 复制到临时目录跑通「克隆 → 体检」（**新环境先跑**）
+- `scripts/preflight.py` —— 环境与依赖自检 + 能力矩阵（接自己项目时先跑）
 - `scripts/clone_lesson.py` —— 克隆上一课 + 机械替换 + 首页插卡
 - `scripts/verify_site.py` —— 站点体检（可对任意同类目录运行）
 - `scripts/_config.py` —— 配置读取（命令行 > 配置 > 内置默认）
@@ -149,6 +156,7 @@ cd <site_dir> && PAGES_SOURCE=skills edgeone pages deploy -n <项目名> -a over
 - `references/poster_spec.md` —— 海报 JSON 字段、设计规范、常见坑
 - `references/deploy_runbook.md` —— 发布命令、验证、故障排查、回滚
 - `assets/poster.json` —— 海报配置样板
+- `demo/` —— 可跑的示例站（day1.html + index.html）与示例配置，用于验证与对照结构
 
 ## 交付清单
 

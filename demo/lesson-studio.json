@@ -1,0 +1,37 @@
+{
+  "_comment": "demo 专用的配置：project_root 会在动手前被改成本地 demo 路径。字段含义见 scripts/config.example.json。",
+
+  "project_root": "D:/你的路径/lesson-page-studio/demo",
+  "site_dir": "demo-site",
+
+  "file_pattern": "day{n}.html",
+  "prefix_base": "demo-day",
+  "export_base": "Demo_Day{n}_Record.png",
+  "doc_title_base": "Demo Day {n}",
+  "brand_line": "DEMO LEARNING · DAY {n}",
+  "brand_mark": "DEMO LEARNING",
+
+  "site_url": "https://example.com/",
+  "alt_url": "",
+
+  "index_card_title": "Day {n} · {zh} / {en}",
+  "index_card_link": "打开第 {n} 天课程 / Open Day {n} lesson →",
+
+  "browser": {
+    "executable": ""
+  },
+
+  "deploy": {
+    "git_remote_contains": "",
+    "git_author_email": "",
+    "edgeone_project": "",
+    "edgeone_area": "overseas",
+    "vercel_backup_host": ""
+  },
+
+  "poster": {
+    "out_dir": "linkedin/day{n}",
+    "png": "Demo_Day{n}_Promo.png",
+    "record_png": "Demo_Day{n}_Record.png"
+  }
+}

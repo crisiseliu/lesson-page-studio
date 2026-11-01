@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo Day 1 · 演示课程 / Demo Lesson</title>
+<style>
+:root{--navy:#0F2A43;--amber:#FFC72C;--ink:#1b2733;--muted:#5b6b7a;--line:#e3e8ee;--bg:#f5f7fa}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+header{background:var(--navy);color:#fff;padding:28px 20px 22px}
+header small{display:block;letter-spacing:.18em;font-size:12px;color:#9fb4c8;margin-bottom:8px}
+header h1{margin:0;font-size:24px;line-height:1.35}
+.badge{display:inline-block;background:var(--amber);color:var(--navy);font-weight:700;border-radius:6px;padding:6px 12px;margin-top:14px;font-size:14px}
+main{max-width:820px;margin:0 auto;padding:22px 16px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 20px 16px;margin:0 0 16px}
+.card h2{margin:0 0 10px;font-size:18px}
+.card h2 span{display:block;font-size:13px;color:var(--muted);font-weight:400;margin-top:2px}
+.card p{margin:8px 0}
+.en{color:var(--muted);font-size:14px}
+ul{margin:8px 0 8px 20px;padding:0}
+li{margin:6px 0}
+label.check{display:flex;gap:10px;align-items:flex-start;margin:8px 0;cursor:pointer}
+label.check input{margin-top:5px}
+input[type=text],textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;background:#fbfcfd}
+textarea{min-height:74px;resize:vertical}
+button{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:11px 18px;font:inherit;font-weight:600;cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.photo{width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--amber);display:none}
+#photoWrap{display:flex;gap:14px;align-items:center;margin-top:10px}
+footer{max-width:820px;margin:0 auto;padding:0 16px 40px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <small>DEMO LEARNING · DAY 1</small>
+  <h1>演示课程：这一页就是模板<br><span style="font-size:16px;font-weight:400;opacity:.85">Demo lesson: this page is the template</span></h1>
+  <div class="badge">结构演示 / Structure Demo · 7 个区块 + 导出</div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>今日目标<span>Learning objectives</span></h2>
+    <ul>
+      <li>认识页面骨架：7 个区块 + 打卡导出。</li>
+      <li>确认克隆脚本能正确改写编号、存储前缀与导出文件名。</li>
+      <li>跑通体检与浏览器回归，再动手改自己的内容。</li>
+    </ul>
+    <p class="en">Understand the skeleton, confirm the clone script rewrites numbering and storage prefixes, then replace the content with your own.</p>
+  </section>
+
+  <section class="card">
+    <h2>核心概念<span>Key concepts</span></h2>
+    <p>每页自包含：CSS 在 <code>&lt;style&gt;</code>，JS 在 <code>&lt;script&gt;</code>，不依赖任何外部框架。公式示例：<b>E = m × g × h</b>，其中 E 为势能（J）、m 为质量（kg）、g 取 9.81 m/s²、h 为高度（m）。</p>
+    <p class="en">Self-contained page: styles and scripts are inline. Potential energy: E = m·g·h (J), with m in kg, g = 9.81 m/s², h in m.</p>
+  </section>
+
+  <section class="card">
+    <h2>术语起步<span>Starter glossary</span></h2>
+    <ul>
+      <li><b>模板 / Template</b> —— 被克隆的基准页面</li>
+      <li><b>锚点 / Anchor</b> —— 脚本用来定位替换的固定字符串</li>
+      <li><b>存储前缀 / Storage prefix</b> —— 隔离每课本地记录</li>
+      <li><b>回归 / Regression</b> —— 改完自动跑一遍检查</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>备考情景<span>Study scenario</span></h2>
+    <p>你拿到一份新科目大纲，需要在同一套视觉规范下连续出 30 课。先克隆本页生成 Day 2，再逐区块替换内容，编号与前缀由脚本保证一致。</p>
+    <p class="en">You need 30 lessons under one visual standard. Clone this page into Day 2, then rewrite each block; numbering and prefixes are handled by the script.</p>
+  </section>
+
+  <section class="card">
+    <h2>巩固练习<span>Quick review</span></h2>
+    <p>1. 克隆后如果存储前缀没换，会发生什么？</p>
+    <p>2. 为什么导出前要等图片解码完成？</p>
+    <p class="en">参考答案：1) 新旧课共用同一份本地记录，可能互相覆盖；2) 否则偶发导出照片空白。（自编练习题，不是官方真题）</p>
+  </section>
+
+  <section class="card">
+    <h2>学习打卡与笔记<span>Progress &amp; notes</span></h2>
+    <div id="photoWrap">
+      <img class="photo" id="photo" alt="学习照片">
+      <div>
+        <input type="file" id="photoInput" accept="image/*">
+        <p class="en" style="margin:6px 0 0">上传一张学习照片，会存入本地并画进导出卡。</p>
+      </div>
+    </div>
+    <p style="margin-top:14px"><input type="text" id="learnerName" placeholder="你的昵称 / Your name"></p>
+    <label class="check"><input type="checkbox" class="chk" data-i="0"><span>读完今日目标 / Read the objectives</span></label>
+    <label class="check"><input type="checkbox" class="chk" data-i="1"><span>掌握核心概念 / Grasp key concepts</span></label>
+    <label class="check"><input type="checkbox" class="chk" data-i="2"><span>记住四个术语 / Memorize the glossary</span></label>
+    <label class="check"><input type="checkbox" class="chk" data-i="3"><span>完成巩固练习 / Finish the review</span></label>
+    <p style="margin-top:12px"><textarea id="a1" placeholder="简答 1 / Answer 1"></textarea></p>
+    <p><textarea id="a2" placeholder="简答 2 / Answer 2"></textarea></p>
+    <p><textarea id="notes" placeholder="笔记 / Notes"></textarea></p>
+    <div class="row">
+      <button id="exportBtn" type="button">导出学习记录卡 / Export record card</button>
+      <span id="streak" style="align-self:center;color:#5b6b7a;font-size:14px"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>可靠来源<span>Official references</span></h2>
+    <ul>
+      <li>本演示页无需外部来源；正式课程请填可核验的官网或标准编号。</li>
+      <li>示例格式：机构名 · 文档标题 · 年份 · URL。</li>
+    </ul>
+  </section>
+</main>
+
+<footer>演示模板 · 可自由替换内容 / Demo template — replace the content freely.</footer>
+<canvas id="card" width="1350" height="1813" style="display:none"></canvas>
+
+<script>
+(function () {
+  var NS = 'demo-day1-';
+  var STREAK_KEY = 'demo-study-days';
+  var photoData = '';
+
+  function storageGet(k) {
+    try { return localStorage.getItem(k); } catch (e) { return null; }
+  }
+  function storageSet(k, v) {
+    try { localStorage.setItem(k, v); } catch (e) { /* 隐私模式静默降级 */ }
+  }
+
+  function touchStreak() {
+    var today = new Date().toISOString().slice(0, 10);
+    var raw = storageGet(STREAK_KEY);
+    var days = raw ? JSON.parse(raw) : [];
+    if (days.indexOf(today) === -1) {
+      days.push(today);
+      storageSet(STREAK_KEY, JSON.stringify(days));
+    }
+    var el = document.getElementById('streak');
+    if (el) { el.textContent = '累计学习 ' + days.length + ' 天 / ' + days.length + ' day(s)'; }
+  }
+
+  function persist() {
+    var checks = [];
+    document.querySelectorAll('.chk').forEach(function (c) { checks.push(c.checked); });
+    storageSet(NS + 'checks', JSON.stringify(checks));
+    storageSet(NS + 'learnerName', document.getElementById('learnerName').value || '');
+    storageSet(NS + 'a1', document.getElementById('a1').value || '');
+    storageSet(NS + 'a2', document.getElementById('a2').value || '');
+    storageSet(NS + 'notes', document.getElementById('notes').value || '');
+    if (photoData) { storageSet(NS + 'photo', photoData); }
+  }
+
+  function restoreProgress() {
+    var checks = storageGet(NS + 'checks');
+    if (checks) {
+      try {
+        JSON.parse(checks).forEach(function (v, i) {
+          var box = document.querySelector('.chk[data-i="' + i + '"]');
+          if (box) { box.checked = v; }
+        });
+      } catch (e) { /* 忽略损坏数据 */ }
+    }
+    ['learnerName', 'a1', 'a2', 'notes'].forEach(function (id) {
+      var v = storageGet(NS + id);
+      var el = document.getElementById(id);
+      if (v && el) { el.value = v; }
+    });
+    photoData = storageGet(NS + 'photo') || '';
+    if (photoData) {
+      var img = document.getElementById('photo');
+      img.src = photoData;
+      img.style.display = 'block';
+    }
+  }
+
+  function loadImage(src) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        if (img.decode) {
+          img.decode().then(function () { resolve(img); }).catch(function () { resolve(img); });
+        } else { resolve(img); }
+      };
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); return; }
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawExportCard() {
+    var c = document.getElementById('card');
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.fillStyle = '#0F2A43';
+    ctx.fillRect(0, 0, c.width, 220);
+    ctx.fillStyle = '#FFC72C';
+    ctx.font = 'bold 40px sans-serif';
+    ctx.fillText('DEMO LEARNING · DAY 1', 90, 112);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 56px sans-serif';
+    ctx.fillText('演示课程学习记录', 90, 178);
+
+    ctx.fillStyle = '#1b2733';
+    ctx.font = '34px sans-serif';
+    var name = document.getElementById('learnerName').value || '学习者';
+    ctx.fillText('昵称 / Name：' + name, 90, 300);
+
+    ctx.font = '30px sans-serif';
+    var checks = document.querySelectorAll('.chk');
+    var y = 380;
+    checks.forEach(function (box, i) {
+      ctx.fillStyle = box.checked ? '#0F6E56' : '#888780';
+      ctx.fillText((box.checked ? '☑ ' : '☐ ') + '完成项 ' + (i + 1) + (box.checked ? ' / done' : ' / pending'), 90, y);
+      y += 52;
+    });
+
+    if (photoData) {
+      return loadImage(photoData).then(function (img) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(1040, 420, 160, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(img, 880, 260, 320, 320);
+        ctx.restore();
+        finish();
+      });
+    }
+    function finish() {
+      ctx.fillStyle = '#5b6b7a';
+      ctx.font = '26px sans-serif';
+      ctx.fillText('导出尺寸 1350×1813 · Demo template', 90, 1700);
+      var link = document.createElement('a');
+      link.download = 'Demo_Day1_Record.png';
+      link.href = c.toDataURL('image/png');
+      link.click();
+    }
+    finish();
+  }
+
+  document.getElementById('photoInput').addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) { return; }
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      var im = new Image();
+      im.onload = function () {
+        var side = Math.min(im.width, im.height);
+        var cv = document.createElement('canvas');
+        cv.width = 320; cv.height = 320;
+        var cx = cv.getContext('2d');
+        cx.drawImage(im, (im.width - side) / 2, (im.height - side) / 2, side, side, 0, 0, 320, 320);
+        photoData = cv.toDataURL('image/jpeg', 0.82);
+        var el = document.getElementById('photo');
+        el.src = photoData;
+        el.style.display = 'block';
+        persist();
+        touchStreak();
+      };
+      im.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.querySelectorAll('.chk').forEach(function (c) {
+    c.addEventListener('change', function () { persist(); touchStreak(); });
+  });
+  ['learnerName', 'a1', 'a2', 'notes'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', persist);
+  });
+
+  var btn = document.getElementById('exportBtn');
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    try { drawExportCard(); } catch (e) { /* 导出失败不应卡住按钮 */ }
+    setTimeout(function () { btn.disabled = false; }, 600);
+    touchStreak();
+  });
+
+  restoreProgress();
+  touchStreak();
+})();
+</script>
+</body>
+</html>
