@@ -4,6 +4,8 @@
 
 适用于任何"一课一个 HTML、内联 CSS/JS、Canvas 导出"的静态学习站，不限主题。
 
+仓库：<https://github.com/crisiseliu/lesson-page-studio> ｜ 版本：v1.1.0 ｜ 许可：MIT
+
 ---
 
 ## 安装
@@ -22,7 +24,7 @@ macOS:    ~/.workbuddy/skills/lesson-page-studio/
 **方式 B：从 Git 仓库（便于跟进更新）**
 
 ```bash
-git clone <仓库地址> ~/.workbuddy/skills/lesson-page-studio
+git clone https://github.com/crisiseliu/lesson-page-studio.git ~/.workbuddy/skills/lesson-page-studio
 ```
 
 **方式 C：项目级技能**（只对某个项目生效）
