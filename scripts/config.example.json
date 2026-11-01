@@ -1,0 +1,35 @@
+{
+  "_comment": "复制本文件为项目根目录下的 lesson-studio.json，按你的实际情况改。脚本用 --config 读取；命令行参数优先级更高。",
+
+  "project_root": "D:/CSP-Daily-Learning",
+  "site_dir": "edgeone-release",
+
+  "file_pattern": "day{n}.html",
+  "prefix_base": "csp-day",
+  "export_base": "CSP_Day{n}_Learning_Record.png",
+  "doc_title_base": "CSP Day {n}",
+  "brand_line": "CSP DAILY LEARNING · DAY {n}",
+  "brand_mark": "昏昏睡睡HSE",
+
+  "site_url": "https://www.drowsyhse.com/",
+  "alt_url": "https://drowsyhse.com/",
+
+  "browser": {
+    "_comment": "留空则自动探测 Edge/Chrome；Windows 常见值：C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "executable": ""
+  },
+
+  "deploy": {
+    "git_remote_contains": "crisiseliu/csp-daily-learning",
+    "git_author_email": "crisiseliu@users.noreply.github.com",
+    "edgeone_project": "csp-daily-learning-global",
+    "edgeone_area": "overseas",
+    "vercel_backup_host": "csp-daily-learning-louis.vercel.app"
+  },
+
+  "poster": {
+    "out_dir": "linkedin/day{n}",
+    "png": "CSP_Day{n}_Promo.png",
+    "record_png": "CSP_Day{n}_Learning_Record.png"
+  }
+}

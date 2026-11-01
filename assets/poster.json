@@ -1,0 +1,57 @@
+{
+  "day": 7,
+  "title_zh": "考试英语术语系统",
+  "title_en": "Exam English Terminology",
+  "subtitle_zh": "词根词缀 · 易混词对 · 情景记忆",
+  "subtitle_en": "Roots & Affixes · Confusable Pairs · Context Memory",
+  "domain_zh": "Domain 1 · 安全原理高级应用（基础工具）",
+  "domain_en": "Domain 1 · Advanced Safety Principles (Toolkit)",
+  "sections": [
+    {
+      "no": "01",
+      "icon": "📘",
+      "title_zh": "为什么术语是提分关键",
+      "title_en": "Why Terminology Drives Scores",
+      "items": [
+        "<b>题干陷阱：</b>hazard 指危险源，risk 指风险，混用即选错",
+        "<b>选项差异：</b>多数错项靠一个近义词改写而成",
+        "<b>CSP 语言：</b>答题要用标准表述，不用口语"
+      ]
+    },
+    {
+      "no": "02",
+      "icon": "🧩",
+      "title_zh": "词根词缀记忆法",
+      "title_en": "Roots & Affixes Method",
+      "items": [
+        "<b>常见词根：</b>-cid（落下）、-vent（来）、-tect（覆盖）",
+        "<b>前缀：</b>miti-（减轻）、pre-（预先）、de-（去除）",
+        "<b>组合：</b>mitigation = 减轻措施，与 control 层级对应"
+      ]
+    },
+    {
+      "no": "03",
+      "icon": "⚖️",
+      "title_zh": "五组高频易混词",
+      "title_en": "Five Confusable Pairs",
+      "items": [
+        "<b>incident / accident：</b>前者含未遂事件，后者仅指造成伤害",
+        "<b>exposure / dose：</b>暴露是接触，剂量是体内实际量",
+        "<b>hierarchy / framework：</b>层级是控制措施排序，框架是管理体系"
+      ]
+    }
+  ],
+  "terms": [
+    ["危险源", "Hazard"],
+    ["风险", "Risk"],
+    ["减轻措施", "Mitigation"],
+    ["暴露", "Exposure"],
+    ["层级控制", "Hierarchy of Controls"]
+  ],
+  "reading": [
+    "BCSP CSP Blueprint (CSP11)",
+    "OSHA — Hazard Identification Training Tool",
+    "NIOSH — Prevention through Design"
+  ],
+  "qr_url": "https://你的正式域名/"
+}
