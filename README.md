@@ -4,7 +4,7 @@
 
 适用于任何"一课一个 HTML、内联 CSS/JS、Canvas 导出"的静态学习站，不限主题。
 
-仓库：<https://github.com/crisiseliu/lesson-page-studio> ｜ 版本：v1.2.1 ｜ 许可：MIT
+仓库：<https://github.com/crisiseliu/lesson-page-studio> ｜ 版本：v2.0.0 ｜ 许可：MIT
 
 ---
 
@@ -31,6 +31,28 @@ git clone https://github.com/crisiseliu/lesson-page-studio.git ~/.workbuddy/skil
 
 放到 `<项目>/.workbuddy/skills/lesson-page-studio/`。
 
+---
+
+## v2.0 新增：多证书课程包（Curriculum Builder）
+
+给 **证书名 + 专业方向 + 领域权重**，即可生成一整套与 CSP 同构的全年课程：
+
+```bash
+python curriculum/scaffold_cert.py --slug <id> --name-zh "…" --name-en "…" \
+  --issuer <机构> --days 360 --domains "D1=中文=EN=25,…" --out ./cert.json
+# 逐块把 __TODO__ 填成真实内容（标准见 references/curriculum_authoring.md）
+python curriculum/build_curriculum.py  --cert cert.json --site <站点> --check
+python curriculum/build_curriculum.py  --cert cert.json --site <站点>
+python curriculum/verify_curriculum.py --cert cert.json --site <站点>
+python curriculum/inject_cert_card.py  --index <站点>/index.html --slug <id> \
+  --href <id>/index.html --name-zh "…" --name-en "…" --desc-zh "…" --desc-en "…"
+```
+
+产出 `<站点>/<slug>/dayN.html` + 课程目录，并在首页插入与既有课程**并列**的卡片。
+页面能力与 CSP 课程页同构（双语 / 判题 / 打卡进度 / 照片 / Canvas 导出卡 / 题目来源提示），
+存储键按课程前缀隔离。详见 `curriculum/README.md`。
+
+---
 ---
 
 ## 60 秒上手

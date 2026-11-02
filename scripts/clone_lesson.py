@@ -141,6 +141,14 @@ def main() -> int:
     )
     log.append(f"导出文件名替换 {cnt} 处")
 
+    # 4b) canonical：模板里带的是上一课地址，漏改会被搜索引擎判成重复页
+    can_pat = re.compile(r'(rel="canonical"\s+href="[^"]*?/)day\d+\.html"')
+    if can_pat.search(html):
+        html = can_pat.sub(lambda m: f'{m.group(1)}day{args.dst}.html"', html)
+        log.append(f"canonical 更新为 /day{args.dst}.html")
+    else:
+        log.append("canonical：模板中未发现，跳过（建议补上以免被判重复页）")
+
     # 5) 首页卡片
     index = site / "index.html"
     index_new = None

@@ -1,7 +1,7 @@
 ---
 name: lesson-page-studio
-description: 在既有「单页自包含」学习站模板上生产新课页面、分享卡与宣传海报，并发布到 EdgeOne Pages 与 GitHub/Vercel。适用于：给现有学习站新增一课/一天、在同一模板上开新科目系列、重做某天海报或学习记录卡、批量补发漏课。触发词：新增一课、加一天课程、生成学习页面、生成海报、学习记录卡、补课、学习网站新内容、lesson page。
-version: 1.2.1
+description: 在既有「单页自包含」学习站模板上生产新课页面、分享卡与宣传海报，并发布到 EdgeOne Pages 与 GitHub/Vercel；v2.0 起支持「多证书课程包」——给证书名 + 专业方向 + 领域权重，即可脚手架出全年课程骨架、批量构建课程页与目录页，并注入站点首页与既有课程卡并列展示。适用于：给现有学习站新增一课/一天、在同一模板上开新科目系列、新增一整套证书课程、重做某天海报或学习记录卡、批量补发漏课。触发词：新增一课、加一天课程、生成学习页面、生成海报、学习记录卡、补课、新证书课程、课程包、学习网站新内容、lesson page。
+version: 2.0.0
 agent_created: true
 ---
 
@@ -146,19 +146,54 @@ cd <site_dir> && PAGES_SOURCE=skills edgeone pages deploy -n <项目名> -a over
 
 ## 资源索引
 
-- `scripts/selftest.py` —— 技能自检：demo 复制到临时目录跑通「克隆 → 体检」（**新环境先跑**）
+- `scripts/selftest.py` —— 技能自检：demo 全链路（克隆 + 体检 + **课程包**，**新环境先跑**）
 - `scripts/preflight.py` —— 环境与依赖自检 + 能力矩阵（接自己项目时先跑）
 - `scripts/clone_lesson.py` —— 克隆上一课 + 机械替换 + 首页插卡
 - `scripts/verify_site.py` —— 站点体检（可对任意同类目录运行）
 - `scripts/_config.py` —— 配置读取（命令行 > 配置 > 内置默认）
 - `scripts/config.example.json` —— 配置模板，复制改名后填
+- `curriculum/` —— **多证书课程包模块**（v2.0 新增，见下）
 - `references/page_spec.md` —— 页面结构、锚点位置、存储键清单
+- `references/curriculum_authoring.md` —— 课程内容创作标准（数值纪律/双语纪律/质检口径）
 - `references/poster_spec.md` —— 海报 JSON 字段、设计规范、常见坑
 - `references/deploy_runbook.md` —— 发布命令、验证、故障排查、回滚
 - `assets/poster.json` —— 海报配置样板
-- `demo/` —— 可跑的示例站（day1.html + index.html）与示例配置，用于验证与对照结构
+- `demo/` —— 可跑的示例站（day1.html + index.html）、示例配置与 **demo-cert.json**（2 块=10 课）
 
-## 交付清单
+## 多证书课程包（v2.0 · 给证书名 + 专业方向即可开工）
+
+适用：在现有学习站上**新增一门完整的证书课程**（全年骨架 + 页面 + 目录 + 首页并列卡片），
+与 CSP 课程卡同层级展示。详细用法与数据模型见 `curriculum/README.md`。
+
+```bash
+# 1) 脚手架：证书名 + 专业方向 + 领域权重 → cert.json（全部 __TODO__）+ 待办清单
+python curriculum/scaffold_cert.py --slug <slug> --name-zh "…" --name-en "…" \
+  --issuer <发证机构> --days 360 --domains "D1=中文=EN=25,…" --out ./<slug>.json
+
+# 2) 填内容：按 references/curriculum_authoring.md 的标准逐块把 __TODO__ 换成真实内容
+#    （这一步是内容工程，AI 按官方蓝图逐块撰写，数值必须核对官方来源）
+
+# 3) 校验 + 构建（输出 <站点>/<slug>/dayN.html + 目录 index.html；校验不过不写盘）
+python curriculum/build_curriculum.py --cert <slug>.json --site <站点> --check
+python curriculum/build_curriculum.py --cert <slug>.json --site <站点>
+
+# 4) 体检 + 5) 首页并列卡片（幂等注入，与 CSP 课程卡同层）
+python curriculum/verify_curriculum.py --cert <slug>.json --site <站点>
+python curriculum/inject_cert_card.py --index <站点>/index.html --slug <slug> \
+  --href <slug>/index.html --name-zh "…" --name-en "…" --desc-zh "…" --desc-en "…" --color "#7A4BA8"
+```
+
+要点与边界：
+
+- 每块 5 课（概念/进阶/术语/情景/复盘）共用一份块内容，构建器自动差异化；页面能力与 CSP 课程页同构
+  （双语、判题、打卡进度、照片、Canvas 导出卡、题目来源提示框、手机适配）。
+- **存储键按课程前缀隔离**（`<slug>-dayN-checks`），不会污染 CSP 学员数据。
+- 新证书目录为 `<站点>/<slug>/`；首页卡片带 `<!--cert:slug:start/end-->` 标记，可重复执行、可 `--remove`。
+- **进度为纯本机**；云同步目前仅覆盖 CSP（表按单证书设计），新证书上云需改造 `user_progress` 为
+  `(owner_id, cert_slug)` 复合键 + 改 `assets/sync.js`，属后续升级项——接手时如实告知用户。
+- 填内容是主体工作量：72 块 × 双语，需分批撰写并自查（权重覆盖、数值核对），不要一次生成完就算交付。
+
+## 交付清单（单课流程）
 
 - [ ] 自检跑过，降级项已记录在案
 - [ ] 新页面生成，编号四处一致
@@ -170,3 +205,14 @@ cd <site_dir> && PAGES_SOURCE=skills edgeone pages deploy -n <项目名> -a over
 - [ ] 分享卡照片非空白
 - [ ] 部署后各域名 200 且字节一致
 - [ ] 海报配置与帖子草稿归档到 `linkedin/dayN/`
+
+## 交付清单（课程包流程，v2.0）
+
+- [ ] cert.json 无 `__TODO__`，build --check 通过
+- [ ] 领域块数占比与官方权重差 ≤3 个百分点；蓝图任务均有块覆盖
+- [ ] 数值逐个核对过官方来源；题目已带"官方不公开真题"提示
+- [ ] verify_curriculum 全通过（页数/canonical/键隔离/DOM）
+- [ ] 浏览器抽查 1–2 课：判题、导出卡 1350×1813、手机无溢出
+- [ ] 首页并列卡片注入且幂等（重复执行仅 1 张）
+- [ ] 如实告知：新证书进度暂为本机，云同步待后续升级
+- [ ] 部署后抽查线上字节一致

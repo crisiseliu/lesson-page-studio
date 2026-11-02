@@ -1,0 +1,96 @@
+{
+ "slug": "demo",
+ "name_zh": "示例证书备考课程",
+ "name_en": "Demo Certificate Prep",
+ "issuer": "Demo Institute",
+ "short": "DEMO",
+ "brand": "DEMO DAILY LEARNING",
+ "file_base": "DEMO",
+ "site_url": "http://127.0.0.1:8000",
+ "days": 10,
+ "lessons_per_block": 5,
+ "source_note_zh": "发证机构不公开历年真题；本页题目依据官方蓝图自编，仅作练习参考。",
+ "source_note_en": "The certifying body releases no past exam items; every item here is a blueprint-based original for practice only.",
+ "references": [
+  {"zh": "示例考试蓝图 / Demo blueprint", "en": "Blueprint", "url": "https://example.org/blueprint"}
+ ],
+ "domains": [
+  {"code": "D1", "zh": "风险管理", "en": "Risk Management", "weight": 50},
+  {"code": "D2", "zh": "健康危害控制", "en": "Health Hazard Control", "weight": 50}
+ ],
+ "blocks": [
+  {
+   "no": 1,
+   "domain": "D1",
+   "zh": "风险评价与优先级排序",
+   "en": "Risk Assessment and Prioritisation",
+   "points": [
+    ["先定义可接受标准，再排序：后果严重度 × 可能性，两者都打分再比", "Set acceptance criteria first, then rank by severity times likelihood"],
+    ["识别危害要覆盖任务、设备、环境、人员四类输入，缺一类就会漏项", "Hazard identification must cover task, equipment, environment and people"],
+    ["控制措施按层级选择：消除、替代、工程、管理、PPE，优先靠前的层级", "Apply the hierarchy of controls: eliminate, substitute, engineer, administrate, PPE"],
+    ["剩余风险必须复评并记录，不能以“已采取措施”当作风险已消除", "Re-assess and record residual risk; controls applied do not mean risk removed"],
+    ["高风险作业设置书面许可与现场确认两道闸门", "High-risk work needs a written permit plus on-site verification"]
+   ],
+   "terms": [
+    ["Hazard", "危害（潜在伤害源）"],
+    ["Risk", "风险（危害发生的可能性与后果组合）"],
+    ["Likelihood", "可能性"],
+    ["Severity", "严重度"],
+    ["Residual Risk", "剩余风险"],
+    ["Hierarchy of Controls", "控制层级"]
+   ],
+   "scenario": {
+    "zh": "某车间噪声 95 dBA（8 小时班），已发耳塞并培训。按控制层级，下一步最应优先做的是？",
+    "en": "A workshop runs at 95 dBA over an 8-hour shift; earplugs have been issued and training done. Per the hierarchy of controls, what should come next first?",
+    "options": [
+     "增加警示标识并再次培训",
+     "对产生噪声的设备做工程改造或隔离（隔声罩、减振、远离工位）",
+     "把耳塞更换为更高降噪等级",
+     "要求员工签署已知风险确认书"
+    ],
+    "answer": "B",
+    "why_zh": "工程控制位于 PPE 之前：先降低源头噪声，再谈个体防护；标识与培训属管理控制，不能替代工程措施。",
+    "why_en": "Engineering controls outrank PPE: reduce noise at source before relying on protection; signs and training are administrative and cannot replace engineering."
+   },
+   "practice": [
+    ["用你现场的一个作业，写出一条可接受风险标准（后果 + 可能性 + 门槛）", "Write one acceptance criterion for a task on your site (consequence + likelihood + threshold)"],
+    ["列出三项你单位尚未落实的工程控制，并说明各自能降低哪类风险", "List three engineering controls not yet in place and which risk each would reduce"]
+   ],
+   "memory": "先定标准再排序，工程优先于佩戴"
+  },
+  {
+   "no": 2,
+   "domain": "D2",
+   "zh": "职业健康危害与暴露控制",
+   "en": "Occupational Health Hazards and Exposure Control",
+   "points": [
+    ["健康危害按途径分：吸入、皮肤吸收、食入、注射，控制手段各不相同", "Route matters: inhalation, skin, ingestion and injection need different controls"],
+    ["暴露评估先分组（相似暴露组），再做个体采样，定点采样只作补充", "Group similar exposure first, then personal sampling; area sampling is supplementary"],
+    ["结果与职业接触限值对比时，注意 8 小时 TWA 与短时接触限值的区别", "Compare with the right limit: 8-hour TWA versus short-term exposure limit"],
+    ["呼吸防护是最后一道：先工程控制，再选适合的过滤等级并做密合性测试", "Respirators are last: engineer first, then correct filter class plus fit testing"],
+    ["健康监护（体检、听力测试）用于早期发现，不替代暴露控制", "Health surveillance detects early effects; it does not replace exposure control"]
+   ],
+   "terms": [
+    ["Exposure Assessment", "暴露评估"],
+    ["TWA", "时间加权平均浓度"],
+    ["STEL", "短时接触限值"],
+    ["Similar Exposure Group", "相似暴露组"],
+    ["Fit Test", "密合性测试"],
+    ["Health Surveillance", "健康监护"]
+   ],
+   "scenario": {
+    "zh": "工人 4 小时暴露于 60 ppm（限值 8 小时 TWA = 50 ppm），其余 4 小时无暴露。8 小时 TWA 是多少？",
+    "en": "A worker is exposed to 60 ppm for 4 hours (8-hour TWA limit 50 ppm) and unexposed for 4 hours. What is the 8-hour TWA?",
+    "options": ["60 ppm", "30 ppm", "50 ppm", "15 ppm"],
+    "answer": "B",
+    "why_zh": "TWA =（60×4 + 0×4）÷ 8 = 30 ppm，低于 50 ppm 限值；但短时峰值仍需单独评估。",
+    "why_en": "TWA = (60*4 + 0*4)/8 = 30 ppm, below the 50 ppm limit; short-term peaks still need separate review."
+   },
+   "practice": [
+    ["写出你现场一个相似暴露组的划分依据（任务、位置、时长）", "Describe how one similar exposure group on your site is defined (task, location, duration)"],
+    ["说明本单位的呼吸防护选用流程：从危害识别到密合性测试", "Describe your respirator selection flow, from hazard identification to fit testing"]
+   ],
+   "memory": "先分组再采样，限值要对口径"
+  }
+ ]
+}

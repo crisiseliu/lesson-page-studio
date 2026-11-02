@@ -92,6 +92,41 @@ def main() -> int:
             print("     " + line.strip())
         check(code == 0, "verify_site 全通过")
 
+        print("\n[4] 课程包模块（curriculum）")
+        demo_cert = DEMO / "demo-cert.json"
+        if not demo_cert.exists():
+            print("     （跳过：找不到 demo/demo-cert.json）")
+        else:
+            site = tmp / "cert-site"
+            site.mkdir()
+            code, out = run([str(SKILL_ROOT / "curriculum" / "build_curriculum.py"),
+                             "--cert", str(demo_cert), "--site", str(site), "--check"], tmp)
+            check(code == 0, "build --check 内容校验通过")
+
+            code, out = run([str(SKILL_ROOT / "curriculum" / "build_curriculum.py"),
+                             "--cert", str(demo_cert), "--site", str(site)], tmp)
+            check(code == 0 and "构建完成" in out, "build 生成 10 页 + 目录")
+
+            code, out = run([str(SKILL_ROOT / "curriculum" / "verify_curriculum.py"),
+                             "--cert", str(demo_cert), "--site", str(site)], tmp)
+            check(code == 0 and "PASS" in out, "verify_curriculum 全通过")
+
+            idx = site / "index.html"
+            idx.write_text("<!doctype html><html><body><main><a class=\"card\" href=\"x.html\">A</a></main></body></html>",
+                           encoding="utf-8")
+            code, out = run([str(SKILL_ROOT / "curriculum" / "inject_cert_card.py"), "--index", str(idx),
+                             "--slug", "demo", "--href", "demo/index.html",
+                             "--name-zh", "示例课程", "--name-en", "Demo Prep"], tmp)
+            code2, _ = run([str(SKILL_ROOT / "curriculum" / "inject_cert_card.py"), "--index", str(idx),
+                            "--slug", "demo", "--href", "demo/index.html",
+                            "--name-zh", "示例课程", "--name-en", "Demo Prep"], tmp)
+            once = idx.read_text(encoding="utf-8").count("cert:demo:start")
+            check(code == 0 and code2 == 0 and once == 1, "首页卡片注入且幂等（重复执行仅 1 张）")
+
+            page1 = (site / "demo" / "day1.html").read_text(encoding="utf-8")
+            check("demo-day1-checks" in page1 and "csp-day1" not in page1, "存储键按课程前缀隔离")
+            check("data-answer=" in page1, "判题按钮携带 data-answer（数据驱动）")
+
         fails = [m for ok, m in results if not ok]
         print("\n" + "-" * 60)
         if fails:

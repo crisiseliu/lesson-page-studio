@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#123f72">
+  <meta name="description" content="{{DESC}}">
+  <title>{{TITLE}}</title><link rel="canonical" href="{{CANONICAL}}">
+  <style>
+    :root{--navy:#0F2A43;--paper:#FBFCFA;--ink:#17211F;--orange:#f39b35;--green:#176B55;--gold:#FFC72C;--line:#E2E9E4;--muted:#66736E}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 Inter,"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif}
+    header{padding:24px 18px;background:linear-gradient(130deg,#0F2A43,#1C4A75);color:#fff}
+    header small{display:block}
+    h1{margin:5px 0;font-size:1.7rem}
+    main{max-width:900px;margin:auto;padding:14px;display:grid;gap:13px}
+    .card{background:#fff;border:1px solid #E2E9E4;border-radius:18px;padding:17px;min-width:0}
+    h2{color:var(--navy);font-size:1.15rem;margin:0 0 10px}
+    .muted,.hint{color:#5d6b7a;font-size:.9rem}
+    label{display:block;margin:8px 0}
+    input[type=text],textarea{width:100%;padding:11px;border:1px solid #d5dfd8;border-radius:9px;font:inherit}
+    input[type=file]{display:block;width:100%;max-width:100%;margin-top:7px;padding:9px;border:1px solid #d5dfd8;border-radius:9px;background:#f8fafc}
+    textarea{min-height:85px;resize:vertical}
+    input:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #8bbcf0;outline-offset:2px}
+    button{border:0;border-radius:10px;padding:11px 16px;background:var(--green);color:#fff;font-weight:650;margin:5px 4px 5px 0;cursor:pointer}
+    button:disabled{opacity:.6;cursor:wait}
+    button.alt{background:#EAF3EE;color:#105744}
+    .step{padding:11px;border-radius:10px;margin:8px 0;background:#EFF5F0}
+    .step:nth-of-type(2){background:#d9f4e6}
+    .step:nth-of-type(3){background:#ffebd6}
+    .feedback{display:none;background:#eef8f1;padding:10px;border-radius:8px;margin-top:8px}
+    .feedback.show{display:block}
+    .upload-line{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .clear-photo{display:inline-block;margin-top:8px;background:#fff;color:#a33;border:1px solid #e0b8b8;border-radius:8px;padding:7px 12px;font:inherit;font-size:14px}
+    .avatar-preview{width:76px;height:76px;border-radius:50%;object-fit:cover;border:3px solid #dbe5f0;display:none}
+    .bar{height:9px;background:#e7edf5;border-radius:20px;overflow:hidden}
+    .bar div{height:100%;background:var(--green);width:0;transition:width .2s ease}
+    a{color:#176B55;overflow-wrap:anywhere}
+    #exportPreview{display:none;width:100%;max-width:540px;height:auto;border:1px solid #ccd7e4;border-radius:10px;margin:18px auto;background:#fff}
+    #status{overflow-wrap:anywhere}
+    @media(max-width:520px){header{padding:20px 15px}h1{font-size:1.45rem}main{padding:10px}.card{padding:14px}.upload-line{align-items:flex-start}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+<header>
+  <small>LOUIS 来自 昏昏睡睡HSE</small>
+  <small>{{BRAND}}</small>
+  <h1>{{H1}}</h1>
+  <div>{{SUB}}</div>
+</header>
+
+<main>
+{{SECTIONS}}
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+  const tasks = Array.from(document.querySelectorAll('.task'));
+  const PHOTO_KEY = '{{PREFIX}}-photo';
+  const STUDY_DAYS_KEY = '{{PREFIX}}-study-days';
+  const DEFAULT_PHOTOS = [
+    '/static/streak1.webp',
+    '/static/streak2.webp',
+    '/static/streak3.webp',
+    '/static/streak4.webp',
+    '/static/streak5.webp',
+    '/static/streak6.webp'
+  ];
+
+  function say(message) {
+    const status = $('status');
+    if (status) status.textContent = message;
+  }
+
+  function storageGet(key, fallback = null) {
+    try {
+      const value = localStorage.getItem(key);
+      return value === null ? fallback : value;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function storageSet(key, value) {
+    try {
+      localStorage.setItem(key, String(value));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function storageRemove(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      // Storage may be unavailable in private browsing or restricted contexts.
+    }
+  }
+
+  function persist(key, value) {
+    return storageSet('{{PREFIX}}-' + key, value);
+  }
+
+  function getStudyDays() {
+    try {
+      const parsed = JSON.parse(storageGet(STUDY_DAYS_KEY, '[]'));
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value));
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function dateKey(date) {
+    return date.getFullYear() + '-' +
+      String(date.getMonth() + 1).padStart(2, '0') + '-' +
+      String(date.getDate()).padStart(2, '0');
+  }
+
+  function recordStudyDay() {
+    const days = getStudyDays();
+    const today = dateKey(new Date());
+    if (!days.includes(today)) {
+      days.push(today);
+      if (!storageSet(STUDY_DAYS_KEY, JSON.stringify(days))) {
+        say('浏览器暂不允许保存学习天数；本页其他功能仍可使用。 / Browser storage is unavailable; other page features remain usable.');
+      }
+    }
+    renderStreak();
+  }
+
+  function renderStreak() {
+    const days = getStudyDays();
+    const daySet = new Set(days);
+    const cursor = new Date();
+    cursor.setHours(0, 0, 0, 0);
+
+    if (!daySet.has(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+
+    let streak = 0;
+    while (daySet.has(dateKey(cursor)) && streak < 3650) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    const el = $('streakStatus');
+    if (el) {
+      el.textContent = '连续学习 / Learning streak: ' + streak +
+        ' 天 / days　·　累计学习 / Total study days: ' + daySet.size;
+    }
+    return streak;
+  }
+
+  function updateProgress() {
+    const completed = tasks.filter(task => task.checked).length;
+    $('bar').style.width = (completed / tasks.length * 100) + '%';
+    $('progress').textContent = '已完成 ' + completed + '/' + tasks.length +
+      ' 项 / ' + completed + '/' + tasks.length + ' tasks complete';
+    const progressbar = document.querySelector('[role="progressbar"]');
+    if (progressbar) progressbar.setAttribute('aria-valuenow', String(completed));
+    persist('checks', JSON.stringify(tasks.map(task => task.checked)));
+  }
+
+  function saveAll() {
+    ['a1', 'a2', 'notes'].forEach(id => persist(id, $(id).value));
+    const selected = document.querySelector('input[name="q"]:checked');
+    persist('quiz', selected ? selected.value : '');
+    updateProgress();
+    say('已保存到当前浏览器。重新打开本课程可恢复进度。 / Saved in this browser. Reopen this lesson to restore your progress.');
+  }
+
+  function showModelAnswer(id) {
+    const btn = document.querySelector('.shortBtn[data-id="' + id + '"]') || { dataset: {} };
+    const feedback = $(id + 'feedback');
+    const value = ($(id).value || '').trim();
+    if (!value) {
+      feedback.className = 'feedback show';
+      feedback.textContent = '请先填写答案。 / Please enter an answer first.';
+      return;
+    }
+    recordStudyDay();
+    const cn = btn.dataset.modelZh || '';
+    const en = btn.dataset.modelEn || '';
+    feedback.className = 'feedback show';
+    feedback.textContent = '参考 / Model: ' + cn + ' — ' + en
+      + ' ｜ 学习参考答案，合理表述可以不同；非官方考试答案。 / Study aid, not official exam answer.';
+    persist(id, value);
+  }
+
+  $('checkBtn').addEventListener('click', function () {
+    const btn = $('checkBtn');
+    const selected = document.querySelector('input[name="q"]:checked');
+    const feedback = $('feedback');
+    const answer = (btn.dataset.answer || '').trim().toUpperCase();
+    const whyZh = btn.dataset.whyZh || '';
+    const whyEn = btn.dataset.whyEn || '';
+    feedback.className = 'feedback show';
+    if (!selected) {
+      feedback.textContent = '请先选择答案。 / Please select an answer.';
+      return;
+    }
+    recordStudyDay();
+    const ok = selected.value.toUpperCase() === answer;
+    feedback.textContent = (ok ? '正确。 / Correct. ' : '正确答案是 ' + answer + '。 / The correct answer is ' + answer + '. ')
+      + '解析 / Rationale: ' + whyZh + ' — ' + whyEn;
+    persist('quiz', selected.value);
+  });
+
+  document.querySelectorAll('.shortBtn').forEach(button => {
+    button.addEventListener('click', function () {
+      showModelAnswer(button.dataset.id);
+    });
+  });
+
+  $('notes').addEventListener('input', function () {
+    persist('notes', $('notes').value);
+  });
+
+  $('learnerPhoto').addEventListener('change', function (event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (!file.type || !file.type.startsWith('image/')) {
+      say('请选择图片文件 / Please choose an image file.');
+      event.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      say('图片请小于 5MB / Please choose an image under 5 MB.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function () {
+      const sourceImage = new Image();
+      sourceImage.onload = function () {
+        try {
+          const maxSide = 1200;
+          const ratio = Math.min(1, maxSide / Math.max(sourceImage.naturalWidth, sourceImage.naturalHeight));
+          const width = Math.max(1, Math.round(sourceImage.naturalWidth * ratio));
+          const height = Math.max(1, Math.round(sourceImage.naturalHeight * ratio));
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const context = canvas.getContext('2d');
+          if (!context) throw new Error('Canvas unavailable');
+
+          context.fillStyle = '#ffffff';
+          context.fillRect(0, 0, width, height);
+          context.drawImage(sourceImage, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.82);
+          const preview = $('avatarPreview');
+          preview.onload = function () {
+            preview.style.display = 'block';
+            say('图片已加载并压缩。/ Photo loaded and compressed.');
+          };
+          preview.src = compressed;
+
+          if (!storageSet(PHOTO_KEY, compressed)) {
+            say('图片已加载，但浏览器无法长期保存；本次仍可用于 PNG 导出。/ Photo loaded but could not be stored persistently; it can still be used for this export.');
+          }
+        } catch (error) {
+          say('图片处理失败，请尝试较小或不同格式的图片。/ Could not process the photo. Try a smaller image or another format.');
+        }
+      };
+      sourceImage.onerror = function () {
+        say('无法读取图片，请重试。 / Could not read image. Please retry.');
+      };
+      sourceImage.src = reader.result;
+    };
+    reader.onerror = function () {
+      say('无法读取图片，请重试。 / Could not read image. Please retry.');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $('clearPhotoBtn').addEventListener('click', function () {
+    storageRemove(PHOTO_KEY);
+    $('learnerPhoto').value = '';
+    const preview = $('avatarPreview');
+    preview.removeAttribute('src');
+    preview.style.display = 'none';
+    say('已清除个人图片。导出时将尝试使用网站主题图片。 / Personal photo removed. A built-in theme image will be tried for export.');
+  });
+
+  tasks.forEach(task => {
+    task.addEventListener('change', function () {
+      if (task.checked) recordStudyDay();
+      updateProgress();
+    });
+  });
+
+  $('saveBtn').addEventListener('click', saveAll);
+
+  function loadImage(url, timeoutMs = 3500) {
+    return new Promise(resolve => {
+      const image = new Image();
+      let settled = false;
+      const finish = result => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(result);
+      };
+      const timer = setTimeout(() => finish(null), timeoutMs);
+      image.onload = async () => {
+        try { await image.decode(); } catch (e) { /* 解码失败仍按已加载处理 */ }
+        finish(image);
+      };
+      image.onerror = () => finish(null);
+      image.src = url;
+      if (image.complete && image.naturalWidth > 0) finish(image);
+    });
+  }
+
+  function drawRoundedRect(context, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    if (typeof context.roundRect === 'function') {
+      context.beginPath();
+      context.roundRect(x, y, width, height, r);
+      return;
+    }
+    context.beginPath();
+    context.moveTo(x + r, y);
+    context.lineTo(x + width - r, y);
+    context.quadraticCurveTo(x + width, y, x + width, y + r);
+    context.lineTo(x + width, y + height - r);
+    context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    context.lineTo(x + r, y + height);
+    context.quadraticCurveTo(x, y + height, x, y + height - r);
+    context.lineTo(x, y + r);
+    context.quadraticCurveTo(x, y, x + r, y);
+    context.closePath();
+  }
+
+  function drawExportCard(context, photo) {
+    const width = 1080;
+    const height = 1450;
+    context.fillStyle = '#f9fbf8';
+    context.fillRect(0, 0, width, height);
+
+    const colors = ['#ff7a00', '#f5c928', '#58bfae', '#9b6be8', '#ef8fca', '#78c96b'];
+    for (let i = 0; i < 60; i++) {
+      context.save();
+      context.translate(28 + (i * 173) % 1020, 25 + (i * 97) % 1380);
+      context.rotate((i % 7) * 0.23);
+      context.fillStyle = colors[i % colors.length];
+      if (i % 3 === 0) {
+        context.beginPath();
+        context.arc(0, 0, 5 + i % 4, 0, Math.PI * 2);
+        context.fill();
+      } else {
+        context.fillRect(-4, -7, 8, 14);
+      }
+      context.restore();
+    }
+
+    context.textAlign = 'center';
+    context.textBaseline = 'alphabetic';
+    context.fillStyle = '#2474d9';
+    context.font = 'bold 30px sans-serif';
+    context.fillText('LOUIS 来自 昏昏睡睡HSE', 540, 70);
+    context.fillStyle = '#123f72';
+    context.font = 'bold 24px sans-serif';
+    context.fillText('{{BRAND}}', 540, 112);
+
+    if (photo && photo.naturalWidth > 0) {
+      context.save();
+      context.beginPath();
+      context.arc(540, 360, 180, 0, Math.PI * 2);
+      context.clip();
+      const scale = Math.max(360 / photo.naturalWidth, 360 / photo.naturalHeight);
+      const imageWidth = photo.naturalWidth * scale;
+      const imageHeight = photo.naturalHeight * scale;
+      context.drawImage(photo, 540 - imageWidth / 2, 360 - imageHeight / 2, imageWidth, imageHeight);
+      context.restore();
+      context.lineWidth = 18;
+      context.strokeStyle = '#fff';
+      context.beginPath();
+      context.arc(540, 360, 180, 0, Math.PI * 2);
+      context.stroke();
+    } else {
+      context.fillStyle = '#e5f1df';
+      context.beginPath();
+      context.arc(540, 360, 180, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = '#1c573f';
+      context.font = 'bold 34px sans-serif';
+      context.fillText('KEEP LEARNING!', 540, 370);
+    }
+
+    const learner = [(localStorage.getItem('drowsy_user_name')||''),(localStorage.getItem('learnerName')||''),(storageGet('{{PREFIX}}-learnerName', '')||'')].map(s=>s.trim()).find(Boolean) || 'Drowsy HSE 学员 / Learner';
+    const streakText = $('streakStatus').textContent;
+    const match = streakText.match(/(\d+)\s*天/);
+    const streak = match ? match[1] : '0';
+    const completed = tasks.filter(task => task.checked).length;
+
+    context.fillStyle = '#171b28';
+    context.font = 'bold 72px sans-serif';
+    context.fillText(streak + ' DAY' + (streak === '1' ? '' : 'S'), 540, 650);
+    context.font = 'bold 34px sans-serif';
+    context.fillText('LEARNING STREAK', 540, 700);
+    context.fillStyle = '#69717e';
+    context.font = '26px sans-serif';
+    context.fillText('连续学习 · 每天进步一点点', 540, 745);
+    context.fillText('Keep learning. Keep growing.', 540, 785);
+
+    context.fillStyle = '#123f72';
+    context.font = 'bold 30px sans-serif';
+    context.fillText(learner.slice(0, 32), 540, 850, 900);
+
+    context.fillStyle = '#edf4fb';
+    drawRoundedRect(context, 100, 900, 880, 135, 25);
+    context.fill();
+    context.fillStyle = '#123f72';
+    context.font = 'bold 26px sans-serif';
+    context.fillText('今日学习进度 / TODAY’S PROGRESS', 540, 945);
+    context.fillStyle = '#26384a';
+    context.font = '24px sans-serif';
+    context.fillText(completed + '/4 学习任务完成 / tasks complete', 540, 995);
+
+    context.fillStyle = '#fff1dd';
+    drawRoundedRect(context, 100, 1060, 880, 105, 22);
+    context.fill();
+    context.fillStyle = '#8a4b08';
+    context.font = 'bold 23px sans-serif';
+    context.fillText('公式表与备考系统 / FORMULA SHEET & STUDY SYSTEM', 540, 1100);
+    context.fillStyle = '#26384a';
+    context.font = '21px sans-serif';
+    context.fillText('{{FOOT}}', 540, 1138);
+
+    const date = new Date();
+    context.fillStyle = '#687180';
+    context.font = '23px sans-serif';
+    context.fillText(date.toLocaleDateString('zh-CN', {year:'numeric', month:'short', day:'numeric'}), 540, 1230);
+    context.font = '20px sans-serif';
+    context.fillText('LOUIS 来自 昏昏睡睡HSE · Learn · Reflect · Improve', 540, 1290);
+    context.font = '17px sans-serif';
+    context.fillText('学习记录 · 非官方考试认证 / Study record · Not official certification', 540, 1330);
+  }
+
+  $('exportBtn').addEventListener('click', async function () {
+    const button = $('exportBtn');
+    if (button.disabled) return;
+    button.disabled = true;
+    button.textContent = '正在生成… / Generating…';
+
+    try {
+      recordStudyDay();
+      const canvas = document.createElement('canvas');
+      canvas.width = 1350;
+      canvas.height = 1813;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Canvas unavailable');
+      context.scale(1.25, 1.25);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+
+      let photo = null;
+      const avatar = $('avatarPreview');
+      if (avatar.src) {
+        photo = (avatar.complete && avatar.naturalWidth > 0)
+          ? avatar
+          : await loadImage(avatar.src);
+      }
+      if (!photo) {
+        const selectedPath = DEFAULT_PHOTOS[Math.floor(Math.random() * DEFAULT_PHOTOS.length)];
+        photo = await loadImage(selectedPath);
+      }
+
+      drawExportCard(context, photo);
+      const dataUrl = canvas.toDataURL('image/png');
+      const preview = $('exportPreview');
+      preview.src = dataUrl;
+      preview.style.display = 'block';
+      preview.scrollIntoView({behavior:'smooth', block:'center'});
+
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = '{{FILEBASE}}_Learning_Record.png';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      say('PNG 学习记录已生成。若手机未自动下载，请长按下方预览图保存。 / PNG card generated. If it does not download automatically, long-press the preview to save it.');
+    } catch (error) {
+      say('生成失败：请刷新页面后重试，或长按预览图保存。/ Export failed. Refresh and retry, or save the preview manually.');
+    } finally {
+      button.disabled = false;
+      button.textContent = '生成 PNG 学习记录 / Create PNG learning card';
+    }
+  });
+
+  function restoreProgress() {
+    $('a1').value = storageGet('{{PREFIX}}-a1', '') || '';
+    $('a2').value = storageGet('{{PREFIX}}-a2', '') || '';
+    $('notes').value = storageGet('{{PREFIX}}-notes', '') || '';
+
+    const savedPhoto = storageGet(PHOTO_KEY);
+    if (savedPhoto) {
+      const preview = $('avatarPreview');
+      preview.onload = function () {
+        preview.style.display = 'block';
+      };
+      preview.onerror = function () {
+        storageRemove(PHOTO_KEY);
+        preview.removeAttribute('src');
+        preview.style.display = 'none';
+      };
+      preview.src = savedPhoto;
+    }
+
+    try {
+      const checks = JSON.parse(storageGet('{{PREFIX}}-checks', '[]'));
+      if (Array.isArray(checks)) {
+        tasks.forEach((task, index) => {
+          task.checked = checks[index] === true;
+        });
+      }
+    } catch (error) {
+      tasks.forEach(task => { task.checked = false; });
+    }
+
+    const savedQuiz = storageGet('{{PREFIX}}-quiz', '');
+    if (savedQuiz && /^[ABCD]$/.test(savedQuiz)) {
+      const radio = document.querySelector('input[name="q"][value="' + savedQuiz + '"]');
+      if (radio) radio.checked = true;
+    }
+  }
+
+  restoreProgress();
+  renderStreak();
+  updateProgress();
+})();
+</script>
+<script src="assets/sync.js"></script>
+</body>
+</html>
