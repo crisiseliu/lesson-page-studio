@@ -245,6 +245,8 @@ def render_page(cert, blk, lesson_idx, n, total):
         "{{FOOT}}": f"{t_zh} · Day {n} / {t_en}",
         "{{FILEBASE}}": f"{cert.get('file_base', cert['slug'].upper())}_Day{n}_Learning_Record",
         "{{PREFIX}}": f"{cert['slug']}-day{n}",
+        "{{CERT_SLUG}}": cert["slug"],
+        "{{TOTAL}}": str(total),
         "{{SECTIONS}}": sections,
     }
     with io.open(TEMPLATE, "r", encoding="utf-8") as f:
@@ -345,6 +347,8 @@ footer{{text-align:center;color:var(--muted);font-size:12px;padding:24px 16px 36
   if (f) f.style.width = pct + '%';
 }})();
 </script>
+<script>window.DROWSY_CERT = {{ slug: '{cert['slug']}', total: {total} }};</script>
+<script src="/assets/sync.js?v=3"></script>
 </body>
 </html>"""
 

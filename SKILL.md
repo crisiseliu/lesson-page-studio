@@ -1,7 +1,7 @@
 ---
 name: lesson-page-studio
 description: 在既有「单页自包含」学习站模板上生产新课页面、分享卡与宣传海报，并发布到 EdgeOne Pages 与 GitHub/Vercel；v2.0 起支持「多证书课程包」——给证书名 + 专业方向 + 领域权重，即可脚手架出全年课程骨架、批量构建课程页与目录页，并注入站点首页与既有课程卡并列展示。适用于：给现有学习站新增一课/一天、在同一模板上开新科目系列、新增一整套证书课程、重做某天海报或学习记录卡、批量补发漏课。触发词：新增一课、加一天课程、生成学习页面、生成海报、学习记录卡、补课、新证书课程、课程包、学习网站新内容、lesson page。
-version: 2.0.0
+version: 2.1.0
 agent_created: true
 ---
 
@@ -160,7 +160,7 @@ cd <site_dir> && PAGES_SOURCE=skills edgeone pages deploy -n <项目名> -a over
 - `assets/poster.json` —— 海报配置样板
 - `demo/` —— 可跑的示例站（day1.html + index.html）、示例配置与 **demo-cert.json**（2 块=10 课）
 
-## 多证书课程包（v2.0 · 给证书名 + 专业方向即可开工）
+## 多证书课程包（v2.1 · 给证书名 + 专业方向即可开工）
 
 适用：在现有学习站上**新增一门完整的证书课程**（全年骨架 + 页面 + 目录 + 首页并列卡片），
 与 CSP 课程卡同层级展示。详细用法与数据模型见 `curriculum/README.md`。
@@ -188,9 +188,11 @@ python curriculum/inject_cert_card.py --index <站点>/index.html --slug <slug> 
 - 每块 5 课（概念/进阶/术语/情景/复盘）共用一份块内容，构建器自动差异化；页面能力与 CSP 课程页同构
   （双语、判题、打卡进度、照片、Canvas 导出卡、题目来源提示框、手机适配）。
 - **存储键按课程前缀隔离**（`<slug>-dayN-checks`），不会污染 CSP 学员数据。
+- **云同步（v2.1）**：页面与目录页都会输出 `window.DROWSY_CERT = { slug, total }` 并以根绝对路径
+  `/assets/sync.js?v=N` 引入同步脚本。站点侧的 `sync.js` 按此上下文区分键前缀、总课数与云端
+  `(owner_id, cert_slug)` 记录，因此同一账号可并用多套证书而不串进度。站点若无 `sync.js`，
+  该引用 404、功能自动退化为纯本机，不影响阅读。
 - 新证书目录为 `<站点>/<slug>/`；首页卡片带 `<!--cert:slug:start/end-->` 标记，可重复执行、可 `--remove`。
-- **进度为纯本机**；云同步目前仅覆盖 CSP（表按单证书设计），新证书上云需改造 `user_progress` 为
-  `(owner_id, cert_slug)` 复合键 + 改 `assets/sync.js`，属后续升级项——接手时如实告知用户。
 - 填内容是主体工作量：72 块 × 双语，需分批撰写并自查（权重覆盖、数值核对），不要一次生成完就算交付。
 
 ## 交付清单（单课流程）

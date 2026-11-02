@@ -4,7 +4,7 @@
 
 适用于任何"一课一个 HTML、内联 CSS/JS、Canvas 导出"的静态学习站，不限主题。
 
-仓库：<https://github.com/crisiseliu/lesson-page-studio> ｜ 版本：v2.0.0 ｜ 许可：MIT
+仓库：<https://github.com/crisiseliu/lesson-page-studio> ｜ 版本：v2.1.0 ｜ 许可：MIT
 
 ---
 
@@ -172,6 +172,8 @@ lesson-page-studio/
 
 ## 版本
 
+- **2.1.0** —— 多证书云同步：课程页与目录页输出 `window.DROWSY_CERT = {slug, total}`，同步脚本改根绝对路径 `/assets/sync.js?v=N`（子目录页不再 404）；自检增至 18 项。
+- **2.0.0** —— 新增 `curriculum/` 多证书课程包模块：脚手架 → 构建 → 体检 → 首页并列卡片注入。
 - **1.2.1** —— 修正 `preflight.py` 能力矩阵：非 git 仓库目录不再把「第 6a 步 git/Vercel」标为可用。
 - **1.2.0** —— 新增 `demo/` 可跑示例站与 `scripts/selftest.py` 全链路自检（9 项断言，临时目录，不碰真实项目）。
 - **1.1.0** —— 配置驱动（`lesson-studio.json`）、新增 `preflight.py` 能力矩阵、脚本去掉硬编码路径与域名、降级路径成文、前缀替换自检提示。

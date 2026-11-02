@@ -126,6 +126,11 @@ def main() -> int:
             page1 = (site / "demo" / "day1.html").read_text(encoding="utf-8")
             check("demo-day1-checks" in page1 and "csp-day1" not in page1, "存储键按课程前缀隔离")
             check("data-answer=" in page1, "判题按钮携带 data-answer（数据驱动）")
+            check('slug: "demo"' in page1 and 'total: 10' in page1 and "{{" not in page1,
+                  "页面注入证书上下文（slug + total，无占位符残留）")
+            check('src="/assets/sync.js' in page1, "同步脚本用根绝对路径（子目录页可命中）")
+            cat = (site / "demo" / "index.html").read_text(encoding="utf-8")
+            check("slug: 'demo'" in cat and "/assets/sync.js" in cat, "目录页同样接入云同步")
 
         fails = [m for ok, m in results if not ok]
         print("\n" + "-" * 60)
