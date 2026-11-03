@@ -40,18 +40,29 @@
     #status{overflow-wrap:anywhere}
     @media(max-width:520px){header{padding:20px 15px}h1{font-size:1.45rem}main{padding:10px}.card{padding:14px}.upload-line{align-items:flex-start}}
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+    .lesson-nav{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .lesson-nav.bottom{margin-top:4px;justify-content:flex-end}
+    .nv{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:10px;border:1px solid #E2E9E4;background:#fff;color:#17211F;font-size:13.5px;font-weight:600;text-decoration:none;transition:.15s;white-space:nowrap}
+    a.nv:hover{border-color:#176B55;color:#176B55}
+    .nv.off{opacity:.45}
+    .nv.primary{background:#176B55;border-color:#176B55;color:#fff}
+    a.nv.primary:hover{color:#fff;filter:brightness(1.06)}
+    header .logo{width:60px;height:60px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.22);margin-bottom:10px}
+    .brand .logo-sm{width:26px;height:26px;border-radius:7px;vertical-align:-7px;margin-right:7px}
   </style>
 </head>
 <body>
 <header>
+  <img class="logo" src="/assets/logo-64.png" alt="Drowsy HSE" onerror="this.style.display='none'">
   <small>LOUIS 来自 昏昏睡睡HSE</small>
   <small>{{BRAND}}</small>
   <h1>{{H1}}</h1>
-  <div>{{SUB}}</div>
 </header>
+{{NAV_TOP}}
 
 <main>
 {{SECTIONS}}
+{{NAV_BOTTOM}}
 </main>
 
 <script>
@@ -62,6 +73,9 @@
   const tasks = Array.from(document.querySelectorAll('.task'));
   const PHOTO_KEY = '{{PREFIX}}-photo';
   const STUDY_DAYS_KEY = '{{PREFIX}}-study-days';
+  window.DROWSY_CERT = { slug: '{{CERT_SLUG}}', total: {{TOTAL}} };
+  window.__drowsyLogo = new Image();
+  window.__drowsyLogo.src = '/assets/logo-64.png';
   const DEFAULT_PHOTOS = [
     '/static/streak1.webp',
     '/static/streak2.webp',
@@ -135,23 +149,28 @@
   }
 
   function renderStreak() {
-    const days = getStudyDays();
-    const daySet = new Set(days);
-    const cursor = new Date();
-    cursor.setHours(0, 0, 0, 0);
-
-    if (!daySet.has(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
-
-    let streak = 0;
-    while (daySet.has(dateKey(cursor)) && streak < 3650) {
-      streak += 1;
-      cursor.setDate(cursor.getDate() - 1);
+    /* 天数与学习状态绑定：连续 = 完成课时序号的最长连续段；累计 = 已完成课时总数 */
+    let done = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        const m = new RegExp('^' + CERT_SLUG + '-day(\\d+)-checks$').exec(k) ||
+          (CERT_SLUG === 'csp' && k === 'cspday1checks' ? [null, '1'] : null);
+        if (!m) continue;
+        const v = JSON.parse(localStorage.getItem(k) || '[]');
+        if (Array.isArray(v) && v.some(Boolean)) done.push(Number(m[1]));
+      }
+    } catch (e) {}
+    done = [...new Set(done)].sort((a, b) => a - b);
+    let streak = 0, run = 0;
+    for (let i = 0; i < done.length; i++) {
+      run = (i > 0 && done[i] === done[i - 1] + 1) ? run + 1 : 1;
+      if (run > streak) streak = run;
     }
-
     const el = $('streakStatus');
     if (el) {
       el.textContent = '连续学习 / Learning streak: ' + streak +
-        ' 天 / days　·　累计学习 / Total study days: ' + daySet.size;
+        ' 天 / days　·　累计学习 / Total study days: ' + done.length;
     }
     return streak;
   }
@@ -369,6 +388,7 @@
     context.fillStyle = '#123f72';
     context.font = 'bold 24px sans-serif';
     context.fillText('{{BRAND}}', 540, 112);
+    try { const lg = window.__drowsyLogo; if (lg && lg.complete && lg.naturalWidth) context.drawImage(lg, 512, 122, 56, 56); } catch (e) {}
 
     if (photo && photo.naturalWidth > 0) {
       context.save();
@@ -541,6 +561,7 @@
 })();
 </script>
 <script>window.DROWSY_CERT = { slug: "{{CERT_SLUG}}", total: {{TOTAL}} };</script>
-<script src="/assets/sync.js?v=3"></script>
+<script src="/assets/sync.js?v=4"></script>
+<script src="/assets/bilingual.js?v=1"></script>
 </body>
 </html>

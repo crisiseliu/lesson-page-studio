@@ -129,8 +129,14 @@ def main() -> int:
             check('slug: "demo"' in page1 and 'total: 10' in page1 and "{{" not in page1,
                   "页面注入证书上下文（slug + total，无占位符残留）")
             check('src="/assets/sync.js' in page1, "同步脚本用根绝对路径（子目录页可命中）")
+            check('assets/bilingual.js' in page1, "双语布局脚本已引入")
+            check('lesson-nav' in page1 and 'rel="next"' in page1 and "nv off" in page1,
+                  "导航键齐全（Day 1 无上一天 + 底部下一课）")
+            check('class="logo"' in page1 and "__drowsyLogo" in page1, "页头与导出卡接入 LOGO")
+            check("最长连续段" in page1 and "CERT_SLUG" in page1, "天数按完成课时统计（证书感知）")
             cat = (site / "demo" / "index.html").read_text(encoding="utf-8")
             check("slug: 'demo'" in cat and "/assets/sync.js" in cat, "目录页同样接入云同步")
+            check('class="logo"' in cat, "目录页页头有 LOGO")
 
         fails = [m for ok, m in results if not ok]
         print("\n" + "-" * 60)

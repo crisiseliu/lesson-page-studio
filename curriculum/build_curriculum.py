@@ -234,6 +234,7 @@ def render_page(cert, blk, lesson_idx, n, total):
         sec_progress(cert, n),
         sec_refs(cert),
     ])
+    nav_top, nav_bottom = nav_blocks(n, total)
     base = cert["site_url"].rstrip("/")
     tokens = {
         "{{TITLE}}": title,
@@ -247,6 +248,8 @@ def render_page(cert, blk, lesson_idx, n, total):
         "{{PREFIX}}": f"{cert['slug']}-day{n}",
         "{{CERT_SLUG}}": cert["slug"],
         "{{TOTAL}}": str(total),
+        "{{NAV_TOP}}": nav_top,
+        "{{NAV_BOTTOM}}": nav_bottom,
         "{{SECTIONS}}": sections,
     }
     with io.open(TEMPLATE, "r", encoding="utf-8") as f:
@@ -257,6 +260,25 @@ def render_page(cert, blk, lesson_idx, n, total):
 
 
 COLORS = ["#155BA1", "#7A4BA8", "#B4600F", "#8A6D00", "#3F6E9E", "#B03A2E", "#2E7D32", "#5D6D7E"]
+
+
+def nav_blocks(n, total):
+    """页头导航（上一天 / 课程首页）与底部前进键（下一课）。"""
+    prev = (f'<a class="nv" href="day{n-1}.html" rel="prev">\u2190 \u4e0a\u4e00\u5929 / Previous</a>' if n > 1
+            else '<span class="nv off">\u2190 \u4e0a\u4e00\u5929 / Previous</span>')
+    top = (f'<nav class="lesson-nav" aria-label="\u8bfe\u7a0b\u5bfc\u822a / Lesson navigation">\n'
+           f'  {prev}\n'
+           f'  <a class="nv" href="index.html">\u8bfe\u7a0b\u9996\u9875 / Catalog</a>\n'
+           f'</nav>')
+    if n < total:
+        bottom = (f'<nav class="lesson-nav bottom" aria-label="\u4e0b\u4e00\u8bfe / Next lesson">\n'
+                  f'  <a class="nv primary" href="day{n+1}.html" rel="next">\u4e0b\u4e00\u8bfe \u2192 / Next: Day {n+1}</a>\n'
+                  f'</nav>')
+    else:
+        bottom = ('<nav class="lesson-nav bottom" aria-label="End of course">\n'
+                  '  <span class="nv off">\u5df2\u662f\u6700\u540e\u4e00\u8bfe / End of course</span>\n'
+                  '</nav>')
+    return top, bottom
 
 
 def render_catalog(cert, total):
@@ -291,6 +313,7 @@ def render_catalog(cert, total):
 *{{box-sizing:border-box}}
 body{{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 Inter,"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif}}
 header{{padding:26px 18px;background:linear-gradient(130deg,#0F2A43,#1C4A75);color:#fff}}
+header img.logo{{width:60px;height:60px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.22);margin-bottom:10px}}
 header h1{{margin:6px 0;font-size:1.5rem}}
 header p{{margin:4px 0;opacity:.9;font-size:.92rem}}
 header a{{color:#FFD98A}}
@@ -312,6 +335,7 @@ footer{{text-align:center;color:var(--muted);font-size:12px;padding:24px 16px 36
 </head>
 <body>
 <header>
+  <img class="logo" src="/assets/logo-64.png" alt="Drowsy HSE" onerror="this.style.display='none'">
   <div style="font-size:.8rem;opacity:.85">{esc(cert.get('issuer', ''))} · {esc(cert['name_en'])}</div>
   <h1>{esc(cert['name_zh'])} | Lesson Catalog</h1>
   <p>Day 1 – Day {total} · 按考试蓝图领域组织，中英双语 / Organized by blueprint domains, bilingual</p>
