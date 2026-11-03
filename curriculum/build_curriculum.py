@@ -200,7 +200,7 @@ def sec_progress(cert, n):
     <div class="step" id="streakStatus"><b>连续学习 / Learning streak:</b> 0 天 / 0 days</div>
     <textarea id="notes" placeholder="错题、现场案例、复习计划 / Errors, field examples, review plan"></textarea>
     <button id="saveBtn" type="button">保存本机进度 / Save on this device</button>
-    <button class="alt" id="exportBtn" type="button">生成 PNG 学习记录 / Create PNG learning card</button>
+    <button class="alt" id="exportBtn" type="button">分享今日学习记录 / Share today’s learning card</button>
     <p id="status" class="muted" role="status" aria-live="polite">进度保存在当前浏览器，不会自动跨设备同步。/ Progress is stored in this browser only.</p>
     <img id="exportPreview" alt="PNG 学习记录预览；可长按图片保存 / PNG card preview; long-press to save">
   </section>"""
