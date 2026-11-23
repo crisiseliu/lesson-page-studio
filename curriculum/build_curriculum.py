@@ -7,6 +7,8 @@
 产物：
   <site>/<slug>/day1.html … dayN.html   每课一个自包含页（含 Canvas 学习记录卡）
   <site>/<slug>/index.html              该证书的课程目录（瀑布流卡片 + 本地进度）
+  <site>/<slug>/daily.html              每日一题（v2.3 游戏化注入层，默认自动生成）
+  <site>/<slug>/assets/                 热力图 / 关卡地图脚本 + 题池（一键生成今天的 1/2/3 效果）
 
 校验不过（占位符未填、选项数不对、答案非 A-D 等）一律不写盘，退出码 2。
 """
@@ -19,6 +21,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(HERE, "templates", "page.html")
+sys.path.insert(0, HERE)
+import build_engagement as BE  # noqa: E402  —— v2.3 游戏化注入层
 TYPES = [("概念", "Concept"), ("进阶", "In Depth"), ("术语", "Terminology"),
          ("情景", "Scenario"), ("复盘", "Review")]
 PLACEHOLDER = "__TODO__"
@@ -34,7 +38,7 @@ def attr(s):
 
 # ---------- 校验 ----------
 
-def validate(cert):
+def validate(cert, check_engagement=True):
     errs = []
     for k in ("slug", "name_zh", "name_en", "site_url", "blocks"):
         if not cert.get(k):
@@ -86,6 +90,19 @@ def validate(cert):
                 break
     if not cert.get("domains"):
         errs.append("缺少 domains（领域与权重）")
+    # v2.3：游戏化注入层配置校验（放在写盘前，与内容校验同一道闸门）
+    if check_engagement:
+        try:
+            eng = BE.engagement_config(cert)
+            if eng is not None:
+                total = int(cert.get("days") or len(blocks) * int(cert.get("lessons_per_block", 5)))
+                pool, _ = BE.build_question_pool(cert, eng, total)
+                if not pool["questions"]:
+                    errs.append("engagement: 题池为空（blocks[].scenario 均不可用）")
+                BE.stats_config(cert, eng)      # 缺凭据 / 误用 secret 直接报错
+                BE.build_context(cert, eng, total)
+        except Exception as e:
+            errs.append("engagement: " + str(e))
     return errs
 
 
@@ -281,13 +298,16 @@ def nav_blocks(n, total):
     return top, bottom
 
 
-def render_catalog(cert, total):
+def render_catalog(cert, total, ctx=None):
     blocks = cert["blocks"]
     domains = {d["code"]: d for d in cert.get("domains", [])}
+    dom_index = {d["code"]: i for i, d in enumerate(cert.get("domains", []))}
     cards = []
     for bi, b in enumerate(blocks):
         d = domains.get(b["domain"], {"zh": b["domain"], "en": b["domain"]})
-        color = COLORS[bi % len(COLORS)]
+        # v2.3：颜色按【领域】分配，而非按块循环 —— 关卡地图按颜色变化切段，
+        # 这样章节数 == 领域数，章名与进度语义和考试蓝图一致。
+        color = COLORS[dom_index.get(b["domain"], 0) % len(COLORS)]
         for li in range(int(cert.get("lessons_per_block", 5))):
             n = bi * 5 + li + 1
             t_zh, t_en = TYPES[li]
@@ -300,6 +320,12 @@ def render_catalog(cert, total):
     legend = "\n".join(
         f'    <span class="lg"><i style="background:{COLORS[i % len(COLORS)]}"></i>{esc(d["code"])} · {esc(d["zh"])}</span>'
         for i, d in enumerate(cert.get("domains", [])))
+    # v2.3：目录页注入完整证书上下文 + 游戏化三件套；ctx=None 时保持 v2.1 原样
+    daily_link = (' · <a href="daily.html">⚡ 每日一题 / Daily Challenge</a>' if ctx else '')
+    ctx_json = (BE.js_literal(ctx) if ctx
+                else "{ slug: '" + cert['slug'] + "', total: " + str(total) + " }")
+    eng_scripts = ('<script src="assets/course-heatmap.js?v=1"></script>\n'
+                   '<script src="assets/course-pathmap.js?v=1"></script>\n') if ctx else ''
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -339,7 +365,7 @@ footer{{text-align:center;color:var(--muted);font-size:12px;padding:24px 16px 36
   <div style="font-size:.8rem;opacity:.85">{esc(cert.get('issuer', ''))} · {esc(cert['name_en'])}</div>
   <h1>{esc(cert['name_zh'])} | Lesson Catalog</h1>
   <p>Day 1 – Day {total} · 按考试蓝图领域组织，中英双语 / Organized by blueprint domains, bilingual</p>
-  <p><a href="../index.html">← 返回首页 / Home</a></p>
+  <p><a href="../index.html">← 返回首页 / Home</a>{daily_link}</p>
 </header>
 <div class="wrap">
   <div class="legend">
@@ -371,8 +397,8 @@ footer{{text-align:center;color:var(--muted);font-size:12px;padding:24px 16px 36
   if (f) f.style.width = pct + '%';
 }})();
 </script>
-<script>window.DROWSY_CERT = {{ slug: '{cert['slug']}', total: {total} }};</script>
-<script src="/assets/sync.js?v=3"></script>
+<script>window.DROWSY_CERT = {ctx_json};</script>
+{eng_scripts}<script src="/assets/sync.js?v=3"></script>
 </body>
 </html>"""
 
@@ -382,12 +408,14 @@ def main():
     ap.add_argument("--cert", required=True)
     ap.add_argument("--site", required=True)
     ap.add_argument("--check", action="store_true", help="只校验，不写盘")
+    ap.add_argument("--no-engagement", action="store_true",
+                    help="关闭 v2.3 游戏化三件套（热力图 / 每日一题 / 关卡地图），默认开启")
     args = ap.parse_args()
 
     with io.open(args.cert, "r", encoding="utf-8") as f:
         cert = json.load(f)
 
-    errs = validate(cert)
+    errs = validate(cert, check_engagement=not args.no_engagement)
     if errs:
         print(f"校验失败：{len(errs)} 处问题（未写盘）")
         for e in errs[:20]:
@@ -397,6 +425,14 @@ def main():
     total = int(cert.get("days") or len(cert["blocks"]) * 5)
     if args.check:
         print(f"校验通过：{len(cert['blocks'])} 块 / {total} 课")
+        if not args.no_engagement:
+            eng = BE.engagement_config(cert)
+            if eng is not None:
+                pool, skip = BE.build_question_pool(cert, eng, total)
+                ctx = BE.build_context(cert, eng, total)
+                mode = "cloud" if BE.stats_config(cert, eng) else "local"
+                print(f"  + 游戏化：题池 {pool['count']} 题（跳过 {skip} 块）"
+                      f" / Boss {ctx['bossDays']} / 每日一题 {mode} 模式")
         return
 
     out_dir = os.path.join(args.site, cert["slug"])
@@ -407,10 +443,24 @@ def main():
             page = render_page(cert, blk, li, n, total)
             with io.open(os.path.join(out_dir, f"day{n}.html"), "w", encoding="utf-8", newline="\n") as f:
                 f.write(page)
+
+    # v2.3：一键产出游戏化三件套（自包含在 <site>/<slug>/），拿到目录页上下文
+    eng_res = None
+    if not args.no_engagement:
+        try:
+            eng_res = BE.build(cert, out_dir)
+        except Exception as e:
+            print("游戏化构建失败：" + str(e))
+            sys.exit(2)
+    ctx = eng_res[0] if eng_res else None
     with io.open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8", newline="\n") as f:
-        f.write(render_catalog(cert, total))
+        f.write(render_catalog(cert, total, ctx))
 
     print(f"构建完成：{total} 页 + 目录 -> {out_dir}")
+    if eng_res:
+        meta = eng_res[1]
+        print(f"  + 游戏化三件套：热力图 / 关卡地图 / 每日一题"
+              f"（{meta['questions']} 题，{meta['stats']} 模式，Boss {meta['bossDays']}，{meta['domains']} 领域章节）")
     print(f"首页卡片注入：python curriculum/inject_cert_card.py --index <站点>/index.html "
           f"--slug {cert['slug']} --href {cert['slug']}/index.html")
 

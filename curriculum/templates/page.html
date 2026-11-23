@@ -72,8 +72,11 @@
   const $ = id => document.getElementById(id);
   const tasks = Array.from(document.querySelectorAll('.task'));
   const PHOTO_KEY = '{{PREFIX}}-photo';
-  const STUDY_DAYS_KEY = '{{PREFIX}}-study-days';
-  window.DROWSY_CERT = { slug: '{{CERT_SLUG}}', total: {{TOTAL}} };
+  /* v2.3：自然日数组必须是【课程级统一键】，否则热力图无法汇总 streak / 冻结卡。
+     （persist() 的 {{PREFIX}}-xxx 仍是每课独立，用于照片/笔记/勾选，勿混用。） */
+  const STUDY_DAYS_KEY = '{{CERT_SLUG}}-study-days';
+  const CERT_SLUG = '{{CERT_SLUG}}';
+  window.DROWSY_CERT = { slug: CERT_SLUG, total: {{TOTAL}} };
   window.__drowsyLogo = new Image();
   window.__drowsyLogo.src = '/assets/logo-64.png';
   const DEFAULT_PHOTOS = [

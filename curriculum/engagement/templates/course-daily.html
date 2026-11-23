@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{CERT_NAME_ZH}} 每日一题 · Daily Challenge | {{CERT_NAME_EN}}</title>
+<meta name="description" content="每天一道 {{CERT_NAME_ZH}} 备考题，全球同题，中英双语解析。One {{CERT_NAME_EN}} practice question a day — same question worldwide, with bilingual explanations.">
+<link rel="canonical" href="{{CANONICAL}}">
+<style>
+:root{--navy:#0F2A43;--ink:#17211F;--muted:#66736E;--paper:#FBFCFA;--soft:#F1F5F1;--line:#E2E9E4;--green:#176B55;--gold:#FFC72C}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+header{background:linear-gradient(135deg,#0F2A43,#1C4A75);color:#fff;padding:24px 20px 20px}
+header .wrap{max-width:860px;margin:0 auto}
+header .brand{font-size:12px;letter-spacing:2px;color:var(--gold);font-weight:700}
+header .brand a{color:inherit;text-decoration:none}
+header h1{font-size:1.4rem;margin-top:8px;letter-spacing:-.5px}
+header p{margin-top:6px;font-size:.85rem;color:#B9CBDA}
+main{flex:1;width:100%;max-width:860px;margin:0 auto;padding:22px 20px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:0 2px 8px rgba(23,33,31,.04)}
+.meta{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+.meta .ep{font-size:12px;color:var(--muted)}
+.meta .ep b{color:var(--green)}
+.qtype{display:inline-block;font-size:.7rem;color:#53615b;background:var(--soft);border-radius:99px;padding:3px 10px;margin-top:10px}
+.q{font-size:1.15rem;font-weight:700;line-height:1.55;margin-top:10px}
+.qe{font-size:.9rem;color:var(--muted);line-height:1.55;margin-top:6px}
+.opts{margin-top:18px;display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,background .15s}
+.opt:hover{border-color:#9DB8A9}
+.opt .k{flex:0 0 26px;height:26px;border-radius:50%;background:var(--soft);color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem}
+.opt .txt{line-height:1.5}
+.opt .en{display:block;font-size:.82rem;color:var(--muted);margin-top:2px}
+.opt.sel{border-color:var(--green);background:#F3F9F6}
+.opt.sel .k{background:var(--green);color:#fff}
+.opt.right{border-color:var(--green);background:#EDF7F2}
+.opt.right .k{background:var(--green);color:#fff}
+.opt.wrong{border-color:#C4453A;background:#FBEFEE}
+.opt.wrong .k{background:#C4453A;color:#fff}
+.opt[disabled]{cursor:default}
+.actions{margin-top:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:11px 20px;font:inherit;font-weight:600;cursor:pointer;transition:opacity .15s}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ghost{font-weight:400}
+.btn.share{border-color:var(--green);color:var(--green)}
+.btn.share:hover{background:#F3F9F6}
+.result{margin-top:16px;border-radius:12px;padding:14px 16px;display:none}
+.result.ok{display:block;background:#EDF7F2;border:1px solid #BFE0CF}
+.result.no{display:block;background:#FBEFEE;border:1px solid #EFC9C4}
+.result .verdict{font-weight:700}
+.result.ok .verdict{color:var(--green)}
+.result.no .verdict{color:#C4453A}
+.result .why{margin-top:8px;font-size:.9rem;line-height:1.6;white-space:pre-line}
+.result .why .en{display:block;color:var(--muted);margin-top:4px;font-size:.85rem}
+.result .why .en-src{margin-top:10px;font-size:.85rem}
+.result .why .en-src summary{cursor:pointer;color:var(--muted);list-style:none;padding:4px 0}
+.result .why .en-src summary::-webkit-details-marker{display:none}
+.result .why .en-src summary::before{content:'▸ ';display:inline-block}
+.result .why .en-src[open] summary::before{content:'▾ '}
+.result .why .en-src .en{white-space:pre-line;line-height:1.6;margin-top:6px;padding:8px 10px;background:rgba(127,127,127,.07);border-radius:8px}
+.result .go{margin-top:10px;font-size:.85rem}
+.result .go a{color:var(--green);font-weight:600;text-decoration:none}
+.stats{margin-top:16px;font-size:.85rem;color:var(--muted);display:none}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:.85rem;border-radius:10px;padding:10px 18px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:99}
+.toast.show{opacity:.95}
+footer{text-align:center;color:var(--muted);font-size:.75rem;padding:20px}
+footer a{color:var(--green)}
+.linkbar{text-align:center;padding:14px}
+.linkbar a{color:var(--green);font-weight:600;text-decoration:none;font-size:.9rem}
+@media(max-width:560px){main{padding:16px 12px}.card{padding:16px 14px}.actions .btn{flex:1 1 auto}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="brand"><a href="index.html">{{BRAND}}</a></div>
+  <h1>每日一题 / Daily Challenge</h1>
+  <p>全球同题 · 中英双语解析 — One question a day, same worldwide, bilingual explanations.</p>
+</div></header>
+<main>
+  <div class="card" id="dqCard">
+    <div class="meta">
+      <span class="ep" id="dqMeta">加载中 / Loading…</span>
+      <span class="ep">第 <b id="dqNo">—</b> 期 / No. <b>—</b></span>
+    </div>
+    <div class="qtype" id="dqType" hidden></div>
+    <div class="q" id="dqQ"></div>
+    <div class="qe" id="dqQe"></div>
+    <div class="opts" id="dqOpts"></div>
+    <div class="actions">
+      <button class="btn primary" id="dqSubmit" disabled>提交答案 / Submit</button>
+      <button class="btn share" id="dqShareCard" disabled>生成分享卡 / Share card</button>
+      <button class="btn ghost" id="dqShare" hidden>复制文字战报 / Copy text</button>
+    </div>
+    <div class="result" id="dqResult"></div>
+    <div class="stats" id="dqStats"></div>
+  </div>
+  <div class="linkbar">
+    <a href="index.html">← 返回课程目录 / Back to catalog</a> ·
+    <a href="../index.html">站点首页 / Home</a>
+  </div>
+</main>
+<footer>{{CERT_NAME_EN}} · <a href="{{SITE_URL}}">{{SITE_URL}}</a> · 教育内容，非官方考试材料 / Educational content, not official exam material</footer>
+<div class="toast" id="dqToast"></div>
+<script>window.DROWSY_DAILY_CONFIG = {{DAILY_CONFIG}};</script>
+<script src="assets/qrcode.min.js?v=1"></script>
+<script src="assets/course-daily-share.js?v=1"></script>
+<script>
+/* 游戏化注入层（2/3）：每日一题 + 图片分享卡。
+   window.DROWSY_CERT 由目录页/构建器统一注入；DROWSY_DAILY_CONFIG 提供分享卡上下文。
+   STATS：null = 纯本地练习模式（默认，零外部依赖、零凭据）；
+          对象 = 可选云统计（url/anonKey/submit/stats），凭据由 cert.json 提供，永不写进技能包。 */
+(function () {
+  'use strict';
+  var SLUG = (window.DROWSY_CERT && window.DROWSY_CERT.slug) || '{{SLUG}}';
+  var CERT_NAME = '{{CERT_NAME_ZH}}';
+  var EPOCH = '{{EPOCH}}';
+  var POOL_URL = '{{POOL_URL}}';
+  var SHARE_URL = '{{SHARE_URL}}';
+  var STATS = {{STATS_CONFIG}};
+  var LETTERS = ['A', 'B', 'C', 'D'];
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* 日期以 UTC 为准：全球用户同一天做同一题 */
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
+  function answerKey(date) { return SLUG + '-daily-' + date; }
+  function deviceId() {
+    try {
+      var k = 'drowsy_device_id';
+      var v = localStorage.getItem(k);
+      if (v && /^[0-9a-f]{8,64}$/i.test(v)) return v.toLowerCase();
+      v = '';
+      var buf = new Uint8Array(16);
+      (window.crypto || window.msCrypto).getRandomValues(buf);
+      for (var i = 0; i < buf.length; i++) v += buf[i].toString(16).padStart(2, '0');
+      localStorage.setItem(k, v);
+      return v;
+    } catch (e) { return ''; }
+  }
+  function rpc(fn, args) {
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', STATS.url.replace(/\/$/, '') + '/rest/v1/rpc/' + fn, true);
+      xhr.timeout = 15000;
+      xhr.setRequestHeader('apikey', STATS.anonKey);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('Authorization', 'Bearer ' + STATS.anonKey);
+      xhr.onload = function () {
+        var body = null;
+        try { body = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (e) { body = null; }
+        if (xhr.status >= 200 && xhr.status < 300) resolve(body); else reject(new Error('HTTP ' + xhr.status));
+      };
+      xhr.onerror = function () { reject(new Error('network')); };
+      xhr.ontimeout = function () { reject(new Error('timeout')); };
+      xhr.send(JSON.stringify(args));
+    });
+  }
+  function toast(msg) {
+    var t = $('dqToast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  var state = { pool: null, date: todayStr(), picked: -1, answered: null,
+                q: null, issueNo: 1, stat: null };
+
+  function pickIndex(n) {
+    /* 按 UTC 天数对题池长度取模，一天一题、循环出题。改题池长度会改变历史映射。 */
+    var day = Math.floor(Date.parse(state.date + 'T00:00:00Z') / 86400000) - Math.floor(Date.parse(EPOCH + 'T00:00:00Z') / 86400000);
+    return ((day % n) + n) % n;
+  }
+  function issueNo() {
+    return Math.floor((Date.parse(state.date + 'T00:00:00Z') - Date.parse(EPOCH + 'T00:00:00Z')) / 86400000) + 1;
+  }
+
+  function renderAnswered(q, saved, stat) {
+    $('dqSubmit').style.display = 'none';
+    var opts = $('dqOpts').children;
+    for (var i = 0; i < opts.length; i++) {
+      opts[i].disabled = true;
+      if (i === q.a) opts[i].classList.add('right');
+      if (i === saved.choice && saved.choice !== q.a) opts[i].classList.add('wrong');
+    }
+    showResult(saved.choice === q.a, q, stat);
+    $('dqShare').hidden = false;
+  }
+
+  function showResult(correct, q, stat) {
+    state.stat = stat || null;
+    var el = $('dqResult');
+    el.className = 'result ' + (correct ? 'ok' : 'no');
+    var head = correct ? '回答正确 / Correct!' : '答错了 / Not quite';
+    var why = [];
+    if (q.w && q.w[0]) why.push(esc(q.w[0]));
+    /* 英文原文默认折叠，中文解析主显（Louis 2026-11-23 定的双语惯例） */
+    var enSrc = (q.w && q.w[1])
+      ? '<details class="en-src"><summary>英文原文 / English original</summary><div class="en">' + esc(q.w[1]) + '</div></details>'
+      : '';
+    var whyHtml = why.length ? '<div class="why">' + why.join('') + enSrc + '</div>' : '';
+    var fromHtml = q.day
+      ? '<div class="go">出处 / From: <a href="day' + q.day + '.html">Day ' + q.day + '</a> · 复习本课 / Review this lesson</div>'
+      : (q.bi ? '<div class="go">中文译文供理解，考试以英文原文为准 / Chinese for reference only</div>' : '');
+    el.innerHTML = '<div class="verdict">' + head + '</div>' + whyHtml + fromHtml;
+    if (stat) {
+      var pct = stat.attempts > 0 ? Math.round(stat.correct / stat.attempts * 100) : null;
+      $('dqStats').style.display = 'block';
+      $('dqStats').innerHTML = '今日 ' + stat.attempts + ' 人作答 / ' + stat.attempts + ' answered today' +
+        (pct !== null ? ' · 全网正确率 / global accuracy <b>' + pct + '%</b>' : '');
+    } else if (!STATS) {
+      $('dqStats').style.display = 'block';
+      $('dqStats').textContent = '本地练习模式 / Local practice mode — 本证书未接入全网正确率统计。';
+    }
+  }
+
+  function accuracy() {
+    var s = state.stat;
+    return s && s.attempts > 0 ? Math.round(s.correct / s.attempts * 100) : null;
+  }
+
+  function shareText(q, correct, stat) {
+    var pct = stat && stat.attempts > 0 ? Math.round(stat.correct / stat.attempts * 100) : null;
+    var verdict = correct === null ? '❓ 等你来挑战 / Can you solve it?'
+                : (correct ? '🟩 答对了' : '🟥 答错了');
+    return CERT_NAME + ' 每日一题 ' + state.date +
+      (q && q.day ? ' · Day ' + q.day : '') + '\n' +
+      verdict + (pct !== null ? '（全网正确率 ' + pct + '%）' : '') +
+      '\n你敢来试试吗 / Try it: ' + SHARE_URL;
+  }
+
+  /* 组装图片分享卡数据：答案不上卡，只显示作答结果，保留挑战悬念。
+     二维码 URL 取自 SHARE_URL（构建期注入，默认 <站点>/<slug>/daily.html）。 */
+  function shareCardData() {
+    var q = state.q || {};
+    var correct = state.answered ? (state.answered.choice === q.a) : null;
+    return {
+      date: state.date,
+      issueNo: state.issueNo,
+      question: q.q || '',
+      questionEn: q.qe || '',
+      options: q.o || [],
+      answered: !!state.answered,
+      correct: correct,
+      accuracy: accuracy(),
+      shareUrl: SHARE_URL,
+      certName: CERT_NAME,
+      brand: (window.DROWSY_DAILY_CONFIG && window.DROWSY_DAILY_CONFIG.brand) ||
+             (SLUG.toUpperCase() + ' DAILY LEARNING'),
+      slug: SLUG,
+      shareText: shareText(q, correct, state.stat)
+    };
+  }
+
+  function submitToCloud(q, correct, choice) {
+    if (!STATS) { showResult(correct, q, null); return; }
+    rpc(STATS.submit, {
+      p_date: state.date, p_cert: SLUG, p_q_day: q.day || 0,
+      p_choice: choice, p_correct: correct, p_device_id: deviceId()
+    }).then(function () {
+      return rpc(STATS.stats, { p_date: state.date, p_cert: SLUG });
+    }).then(function (rows) {
+      var r = Array.isArray(rows) ? rows[0] : rows;
+      showResult(correct, q, r || null);
+    }).catch(function () {
+      $('dqStats').style.display = 'block';
+      $('dqStats').textContent = '（统计暂不可用 / stats unavailable）';
+    });
+  }
+  function loadCloudStats(q, saved) {
+    if (!STATS) return;
+    rpc(STATS.stats, { p_date: state.date, p_cert: SLUG }).then(function (rows) {
+      var r = Array.isArray(rows) ? rows[0] : rows;
+      if (r) showResult(saved.choice === q.a, q, r);
+    }).catch(function () {});
+  }
+
+  function main(pool) {
+    state.pool = pool;
+    var n = pool.questions.length;
+    var idx = pickIndex(n);
+    var q = pool.questions[idx];
+    state.q = q;
+    state.issueNo = issueNo();
+    state.stat = null;
+    $('dqNo').textContent = state.issueNo;
+    $('dqMeta').innerHTML = (q.day
+      ? '{{POOL_LABEL_ZH}} · Day ' + q.day
+      : '{{POOL_LABEL_EN}}') + ' · ' + state.date;
+    if (q.t) { $('dqType').hidden = false; $('dqType').textContent = q.t + (q.te ? ' / ' + q.te : ''); }
+    $('dqQ').textContent = q.q;
+    $('dqQe').textContent = q.qe || '';
+    var wrap = $('dqOpts');
+    wrap.innerHTML = '';
+    q.o.forEach(function (txt, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt';
+      var en = (q.oe && q.oe[i]) ? '<span class="en">' + esc(q.oe[i]) + '</span>' : '';
+      b.innerHTML = '<span class="k">' + LETTERS[i] + '</span><span class="txt">' + esc(txt) + en + '</span>';
+      b.addEventListener('click', function () {
+        if (state.answered) return;
+        state.picked = i;
+        for (var j = 0; j < wrap.children.length; j++) wrap.children[j].classList.remove('sel');
+        b.classList.add('sel');
+        $('dqSubmit').disabled = false;
+      });
+      wrap.appendChild(b);
+    });
+
+    /* 分享卡按钮不依赖答题状态：未答题也能生成「来挑战」邀请卡 */
+    $('dqShareCard').disabled = false;
+    $('dqShareCard').addEventListener('click', function () {
+      if (!window.DrowsyDailyShare) { toast('分享卡组件未加载 / Share card unavailable'); return; }
+      window.DrowsyDailyShare.open(shareCardData());
+    });
+
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(answerKey(state.date)) || 'null'); } catch (e) {}
+    if (saved && typeof saved.choice === 'number') {
+      state.answered = saved;
+      renderAnswered(q, saved, null);
+      loadCloudStats(q, saved);
+      return;
+    }
+
+    $('dqSubmit').addEventListener('click', function () {
+      if (state.picked < 0 || state.answered) return;
+      var correct = state.picked === q.a;
+      state.answered = { choice: state.picked, correct: correct, day: q.day };
+      try { localStorage.setItem(answerKey(state.date), JSON.stringify(state.answered)); } catch (e) {}
+      renderAnswered(q, state.answered, null);
+      submitToCloud(q, correct, state.picked);
+    });
+
+    $('dqShare').addEventListener('click', function () {
+      var correct = state.answered ? (state.answered.choice === q.a) : null;
+      var text = shareText(q, correct, state.stat);
+      function done() { toast('战报已复制，去粘贴分享吧 / Copied!'); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+      } else { fallbackCopy(text); done(); }
+    });
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  fetch(POOL_URL)
+    .then(function (r) { return r.json(); })
+    .then(function (pool) {
+      if (!pool || !Array.isArray(pool.questions) || !pool.questions.length) throw new Error('empty');
+      main(pool);
+    })
+    .catch(function () {
+      $('dqMeta').textContent = '题库加载失败，请稍后重试 / Failed to load question pool';
+    });
+})();
+</script>
+</body>
+</html>

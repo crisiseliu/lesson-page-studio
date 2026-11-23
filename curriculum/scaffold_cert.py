@@ -14,6 +14,7 @@
 references/curriculum_authoring.md 的标准逐块填实；build_curriculum.py 会拒绝构建。
 """
 import argparse
+import datetime
 import io
 import json
 import math
@@ -122,6 +123,18 @@ def main():
         "site_url": args.site_url,
         "days": args.days,
         "lessons_per_block": 5,
+        "engagement": {
+            "enabled": True,
+            "_comment": "v2.4 游戏化注入层：一键生成热力图 / 每日一题（含图片分享卡）/ 关卡地图；详见 references/engagement_spec.md",
+            "daily": {
+                "_comment": "默认纯本地模式（零凭据）；share_url 可改二维码落地页；云统计升级见 references/engagement_spec.md",
+                "epoch": datetime.date.today().isoformat(),
+                "pool_version": 1,
+                "stats": False,
+                "exclude_blocks": [],
+                "share_url": ""
+            }
+        },
         "source_note_zh": ("官方机构不公开历年真题，也不公布官方题库。本页所有题目均由本站依据官方考试蓝图与公开考试规格自行编制，"
                            "仅作练习与自测参考，不代表真实考试的题目、难度或表述。"),
         "source_note_en": ("The certifying body does not release past exam questions or an official item bank. Every item here "
@@ -146,7 +159,16 @@ def main():
              "- `terms`：6 个英文术语 + 中文释义（考场原文用词优先）",
              "- `scenario`：四选一情景题 + 正确项 + 中英解析",
              "- `practice`：2 道简答（中英成对）",
-             "- `memory`：一句中文记忆句", ""]
+             "- `memory`：一句中文记忆句", "",
+             "## v2.4 游戏化三件套 + 图片分享卡（构建时自动生成，无需手写）", "",
+             "`build_curriculum.py` 在生成课程页与目录的同时会产出：", "",
+             "- `assets/course-heatmap.js` + `assets/course-pathmap.js`（目录页热力图 / 关卡地图）",
+             "- `daily.html` + `assets/data/daily_questions.json`（每日一题，题源就是各块 `scenario`）",
+             "- `assets/qrcode.min.js` + `assets/course-daily-share.js`（一键生成图片分享卡：网址 + 可扫码二维码）", "",
+             "把 `engagement.daily.share_url` 填成你希望扫码后打开的落地页；留空则默认跳到本课程的 daily.html。", "",
+             "口径提醒（对齐 2026-11-23 CSP 站）：每日一题**只用考试内容题**，不出现学习方法/备考策略/目的类题目；",
+             "若某块属于此类，把块号写进 `engagement.daily.exclude_blocks`（如 `[7, 32]`）。",
+             "`engagement.enabled=false` 可整体关闭三件套。详见 `references/engagement_spec.md`。", ""]
     todo_path = os.path.splitext(args.out)[0] + "-TODO.md"
     with io.open(todo_path, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(todo))

@@ -1,5 +1,6 @@
 {
   "_comment": "复制本文件为项目根目录下的 lesson-studio.json，按你的实际情况改。脚本用 --config 读取；命令行参数优先级更高。",
+  "_comment_engagement": "v2.4 多证书课程包的游戏化三件套 + 每日一题图片分享卡（含网址/二维码）配置在 cert.json 的 engagement 字段，由 scaffold_cert.py 自动生成；扫码落地页用 engagement.daily.share_url，见 references/engagement_spec.md。本文件只管单课流程。",
 
   "project_root": "D:/CSP-Daily-Learning",
   "site_dir": "edgeone-release",

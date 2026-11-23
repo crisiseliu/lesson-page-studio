@@ -9,6 +9,10 @@
  "site_url": "http://127.0.0.1:8000",
  "days": 10,
  "lessons_per_block": 5,
+ "engagement": {
+  "enabled": true,
+  "daily": {"epoch": "2026-11-23", "pool_version": 1, "stats": false, "exclude_blocks": []}
+ },
  "source_note_zh": "发证机构不公开历年真题；本页题目依据官方蓝图自编，仅作练习参考。",
  "source_note_en": "The certifying body releases no past exam items; every item here is a blueprint-based original for practice only.",
  "references": [

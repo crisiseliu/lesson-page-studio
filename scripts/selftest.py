@@ -135,8 +135,70 @@ def main() -> int:
             check('class="logo"' in page1 and "__drowsyLogo" in page1, "页头与导出卡接入 LOGO")
             check("最长连续段" in page1 and "CERT_SLUG" in page1, "天数按完成课时统计（证书感知）")
             cat = (site / "demo" / "index.html").read_text(encoding="utf-8")
-            check("slug: 'demo'" in cat and "/assets/sync.js" in cat, "目录页同样接入云同步")
+            check('"slug": "demo"' in cat and "/assets/sync.js" in cat,
+                  "目录页同样接入云同步（v2.3 完整证书上下文）")
             check('class="logo"' in cat, "目录页页头有 LOGO")
+
+            print("\n[5] 游戏化三件套（v2.3 · 热力图 / 每日一题 / 关卡地图）")
+            eng = site / "demo"
+            daily_p = eng / "daily.html"
+            hm_p = eng / "assets" / "course-heatmap.js"
+            pm_p = eng / "assets" / "course-pathmap.js"
+            pool_p = eng / "assets" / "data" / "daily_questions.json"
+            check(daily_p.exists() and hm_p.exists() and pm_p.exists() and pool_p.exists(),
+                  "构建一次即产出 4 个游戏化文件")
+            pool = json.loads(pool_p.read_text(encoding="utf-8")) if pool_p.exists() else {}
+            qs = pool.get("questions") or []
+            check(pool.get("count") == 2 and len(qs) == 2, "题池题数 = 块数（demo 2 块）")
+            check(all(len(q.get("o") or []) == 4 and isinstance(q.get("a"), int)
+                      and 0 <= q["a"] <= 3 and q.get("bi") for q in qs),
+                  "题池题目均四选一、答案合法、带双语标记")
+            dh = daily_p.read_text(encoding="utf-8") if daily_p.exists() else ""
+            check("{{" not in dh and "STATS = null" in dh,
+                  "每日一题默认纯本地模式且无未替换 token")
+            check("sb_secret_" not in dh and "eeybslhshcldirbgoviz" not in dh and
+                  "service_role" not in dh, "每日一题页零生产凭据")
+            check('href="http://127.0.0.1:8000/demo/daily.html"' in dh,
+                  "每日一题 canonical 指向课程子目录")
+            check("course-heatmap.js" in cat and "course-pathmap.js" in cat and
+                  'href="daily.html"' in cat, "目录页注入三件套引用与每日一题入口")
+            check('"bossDays": [9, 10]' in cat and '"domainLabels"' in cat and
+                  '"gridSelector"' in cat, "目录页上下文含 Boss 关 / 领域章名 / 网格选择器")
+            hm = hm_p.read_text(encoding="utf-8") if hm_p.exists() else ""
+            pm = pm_p.read_text(encoding="utf-8") if pm_p.exists() else ""
+            check("'csp-day'" not in hm + pm and "TOTAL = 366" not in hm + pm and
+                  "csp-catalog-view" not in pm, "游戏化脚本已去除 CSP 硬编码")
+            check("window.DROWSY_CERT" in hm and "window.DROWSY_CERT" in pm,
+                  "游戏化脚本按证书上下文参数化")
+            check("demo-study-days" in page1 and "demo-day1-study-days" not in page1,
+                  "课程页自然日键改为课程级（热力图可汇总 streak）")
+            idx_ctx, idx_hm, idx_pm = (cat.find("window.DROWSY_CERT ="),
+                                       cat.find("course-heatmap.js"), cat.find("course-pathmap.js"))
+            check(0 <= idx_ctx < idx_hm and idx_ctx < idx_pm,
+                  "证书上下文注入顺序在两个游戏化脚本之前")
+
+            print("\n[6] 每日一题图片分享卡（v2.4）")
+            qr_p = eng / "assets" / "qrcode.min.js"
+            share_p = eng / "assets" / "course-daily-share.js"
+            check(qr_p.exists() and share_p.exists(),
+                  "一键生成 QR 编码器 + 图片分享卡脚本")
+            qr_js = qr_p.read_text(encoding="utf-8") if qr_p.exists() else ""
+            sc_js = share_p.read_text(encoding="utf-8") if share_p.exists() else ""
+            check("QRCodeLite" in qr_js and "create" in qr_js,
+                  "QR 编码器暴露 QRCodeLite.create 全局入口（零依赖）")
+            check("DrowsyDailyShare" in sc_js and "toDataURL" in sc_js,
+                  "分享卡脚本可同步生成 PNG（无图片异步加载）")
+            check("drowsyhse.com" not in sc_js and "eeybslhshcldirbgoviz" not in sc_js
+                  and "sb_secret_" not in sc_js and "sb_publishable_" not in sc_js,
+                  "分享卡脚本零生产域名 / 凭据硬编码")
+            check('id="dqShareCard"' in dh and "DrowsyDailyShare.open" in dh,
+                  "每日一题页有常驻「生成分享卡」按钮并已接线")
+            check("assets/qrcode.min.js?v=1" in dh and
+                  "assets/course-daily-share.js?v=1" in dh and
+                  "window.DROWSY_DAILY_CONFIG" in dh,
+                  "分享卡资源引用与 DAILY_CONFIG 上下文注入齐全")
+            check('"shareUrl"' in dh and "http://127.0.0.1:8000/demo/daily.html" in dh,
+                  "二维码目标 URL 指向本课程每日一题页")
 
         fails = [m for ok, m in results if not ok]
         print("\n" + "-" * 60)
