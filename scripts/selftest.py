@@ -200,6 +200,70 @@ def main() -> int:
             check('"shareUrl"' in dh and "http://127.0.0.1:8000/demo/daily.html" in dh,
                   "二维码目标 URL 指向本课程每日一题页")
 
+            print("\n[7] 错题本 + 间隔复习（v2.5）")
+            wb_p = eng / "assets" / "course-wrongbook.js"
+            rv_p = eng / "review.html"
+            qi_p = eng / "assets" / "data" / "quiz_index.json"
+            sql_p = eng / "assets" / "wrongbook_cert.sql"
+            check(all(p.exists() for p in (wb_p, rv_p, qi_p, sql_p)),
+                  "一键生成错题本页 + 采集脚本 + 回填索引 + SQL 模板")
+            wb_js = wb_p.read_text(encoding="utf-8") if wb_p.exists() else ""
+            check("window.WrongBook" in wb_js and "[1, 3, 7]" in wb_js and "markRight" in wb_js,
+                  "错题本脚本暴露 API 且实现 1/3/7 天 SRS")
+            check("DROWSY_WRONGBOOK_CONFIG" in wb_js and "DROWSY_CERT" in wb_js,
+                  "运行时按证书上下文参数化（脚本零构建 token）")
+            check("drowsyhse.com" not in wb_js and "eeybslhshcldirbgoviz" not in wb_js
+                  and "sb_secret_" not in wb_js and "csp-wrongbook" not in wb_js,
+                  "错题本脚本零生产域名 / 凭据硬编码")
+            rh = rv_p.read_text(encoding="utf-8") if rv_p.exists() else ""
+            check("{{" not in rh and f'href="http://127.0.0.1:8000/demo/review.html"' in rh,
+                  "review.html 无占位符残留且 canonical 指向本课程")
+            check(all(s in rh for s in ['id="stats"', 'id="tabs"', 'WrongBook.ready',
+                                        '待复习 / Due', '已掌握 / Mastered', 'data-act="redo"']),
+                  "统计卡 / 筛选 tab / 重做入口齐全（中英双语）")
+            i_c, i_w = rh.find("window.DROWSY_CERT"), rh.find("course-wrongbook.js")
+            check(0 <= i_c < i_w and '"sync": null' in rh and '"intervals": [1, 3, 7]' in rh,
+                  "证书上下文先于脚本注入，默认纯本地 + 1/3/7 配置")
+            qi = json.loads(qi_p.read_text(encoding="utf-8")) if qi_p.exists() else {}
+            qs_wb = qi.get("questions") or {}
+            check(qi.get("cert") == "demo" and qi.get("count") == 2 and len(qs_wb) == 2
+                  and all(len(v.get("o") or []) == 4 and isinstance(v.get("a"), int)
+                          and len(v.get("w") or []) == 2 for v in qs_wb.values()),
+                  "回填索引按块生成且题干/选项/答案/中英解析格式合法")
+            check("assets/course-wrongbook.js?v=1" in page1 and
+                  "assets/course-wrongbook.js?v=1" in dh and 'href="review.html"' in cat,
+                  "课页 + 每日一题页均注入采集脚本，目录页有错题本入口")
+
+            site2 = tmp / "cert-site-nowb"
+            site2.mkdir()
+            code, out = run([str(SKILL_ROOT / "curriculum" / "build_curriculum.py"),
+                             "--cert", str(demo_cert), "--site", str(site2), "--no-wrongbook"], tmp)
+            page_nw = (site2 / "demo" / "day1.html").read_text(encoding="utf-8") if (site2 / "demo" / "day1.html").exists() else ""
+            check(code == 0 and not (site2 / "demo" / "review.html").exists()
+                  and "course-wrongbook.js" not in page_nw, "--no-wrongbook 可单独关闭错题本")
+
+            bad_cert = json.loads((demo_cert).read_text(encoding="utf-8"))
+            bad_cert["engagement"]["wrongbook"] = {"enabled": True, "sync": True,
+                "supabase": {"url": "https://x.supabase.co", "anon_key": "sb_secret_xxx"}}
+            bad_path = tmp / "bad-cert.json"
+            bad_path.write_text(json.dumps(bad_cert, ensure_ascii=False), encoding="utf-8")
+            code, out = run([str(SKILL_ROOT / "curriculum" / "build_curriculum.py"),
+                             "--cert", str(bad_path), "--site", str(site2), "--check"], tmp)
+            check(code == 2 and "secret" in out, "错题本云同步拒绝 secret key（只允许 anon/publishable）")
+
+            good_cert = json.loads((demo_cert).read_text(encoding="utf-8"))
+            good_cert["engagement"]["wrongbook"] = {"enabled": True, "sync": True,
+                "supabase": {"url": "https://example.supabase.co", "anon_key": "sb_publishable_test"}}
+            good_path = tmp / "good-cert.json"
+            good_path.write_text(json.dumps(good_cert, ensure_ascii=False), encoding="utf-8")
+            site3 = tmp / "cert-site-cloud"
+            site3.mkdir()
+            code, out = run([str(SKILL_ROOT / "curriculum" / "build_curriculum.py"),
+                             "--cert", str(good_path), "--site", str(site3)], tmp)
+            rvh = (site3 / "demo" / "review.html").read_text(encoding="utf-8") if (site3 / "demo" / "review.html").exists() else ""
+            check(code == 0 and '"anonKey": "sb_publishable_test"' in rvh and '"sync": {"url"' in rvh,
+                  "云同步配置正确注入 review.html（anon key，零 secret）")
+
         fails = [m for ok, m in results if not ok]
         print("\n" + "-" * 60)
         if fails:

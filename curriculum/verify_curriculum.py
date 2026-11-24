@@ -20,6 +20,8 @@ def main():
     ap.add_argument("--site", required=True)
     ap.add_argument("--no-engagement", action="store_true",
                     help="跳过 v2.3 三件套检查（配合 build_curriculum.py 的 --no-engagement）")
+    ap.add_argument("--no-wrongbook", action="store_true",
+                    help="跳过 v2.5 错题本检查（配合 build_curriculum.py 的 --no-wrongbook）")
     args = ap.parse_args()
 
     with io.open(args.cert, "r", encoding="utf-8") as f:
@@ -88,11 +90,21 @@ def main():
         pm_path = os.path.join(d, "assets", "course-pathmap.js")
         qr_path = os.path.join(d, "assets", "qrcode.min.js")
         sc_path = os.path.join(d, "assets", "course-daily-share.js")
-        for label, p in [("每日一题页", daily_path), ("题池", pool_path),
-                         ("热力图脚本", hm_path), ("关卡地图脚本", pm_path),
-                         ("QR 编码器", qr_path), ("图片分享卡脚本", sc_path)]:
+        wb_p = os.path.join(d, "assets", "course-wrongbook.js")
+        rv_p = os.path.join(d, "review.html")
+        qi_p = os.path.join(d, "assets", "data", "quiz_index.json")
+        sql_p = os.path.join(d, "assets", "wrongbook_cert.sql")
+        wb_cfg = eng.get("wrongbook") or {}
+        wb_on = isinstance(wb_cfg, dict) and wb_cfg.get("enabled") is not False and not args.no_wrongbook
+        products = [("每日一题页", daily_path), ("题池", pool_path),
+                    ("热力图脚本", hm_path), ("关卡地图脚本", pm_path),
+                    ("QR 编码器", qr_path), ("图片分享卡脚本", sc_path)]
+        if wb_on:
+            products += [("错题本页", rv_p), ("错题本脚本", wb_p),
+                         ("错题回填索引", qi_p), ("错题本云迁移模板", sql_p)]
+        for label, p in products:
             if not os.path.exists(p):
-                errs.append(f"缺少 v2.4 产物：{label} {p}")
+                errs.append(f"缺少 v2.5 产物：{label} {p}")
 
         if os.path.exists(daily_path):
             with io.open(daily_path, "r", encoding="utf-8") as f:
@@ -137,10 +149,13 @@ def main():
             except Exception as e:
                 errs.append("题池 JSON 解析失败：" + str(e))
 
-        for label, p, apis in [("热力图", hm_path, ["window.DROWSY_CERT"]),
-                               ("关卡地图", pm_path, ["window.DROWSY_CERT"]),
-                               ("QR 编码器", qr_path, ["QRCodeLite"]),
-                               ("图片分享卡", sc_path, ["DrowsyDailyShare"])]:
+        script_checks = [("热力图", hm_path, ["window.DROWSY_CERT"]),
+                         ("关卡地图", pm_path, ["window.DROWSY_CERT"]),
+                         ("QR 编码器", qr_path, ["QRCodeLite"]),
+                         ("图片分享卡", sc_path, ["DrowsyDailyShare"])]
+        if wb_on:
+            script_checks.append(("错题本", wb_p, ["window.WrongBook"]))
+        for label, p, apis in script_checks:
             if not os.path.exists(p):
                 continue
             with io.open(p, "r", encoding="utf-8") as f:
@@ -154,6 +169,53 @@ def main():
             for api in apis:
                 if api not in js:
                     errs.append(f"{label} 脚本缺少全局入口 {api}")
+
+        # ---------- 错题本 + 间隔复习（v2.5） ----------
+        if wb_on:
+            for name in pages:
+                with io.open(os.path.join(d, name), "r", encoding="utf-8") as f:
+                    ph = f.read()
+                if "assets/course-wrongbook.js?v=1" not in ph:
+                    errs.append(f"{name}: 缺少错题本采集脚本")
+            if os.path.exists(daily_path):
+                with io.open(daily_path, "r", encoding="utf-8") as f:
+                    dh = f.read()
+                if "assets/course-wrongbook.js?v=1" not in dh:
+                    errs.append("daily.html: 缺少错题本采集脚本")
+            if os.path.exists(rv_p):
+                with io.open(rv_p, "r", encoding="utf-8") as f:
+                    rh = f.read()
+                if "{{" in rh:
+                    errs.append("review.html 存在未替换的模板 token")
+                if f'href="{base}/{slug}/review.html"' not in rh:
+                    errs.append("review.html canonical 不正确")
+                for s in ["window.DROWSY_CERT", "window.DROWSY_WRONGBOOK_CONFIG",
+                          "assets/course-wrongbook.js?v=1", 'id="stats"', 'id="tabs"',
+                          "WrongBook.ready", "待复习 / Due", "已掌握 / Mastered"]:
+                    if s not in rh:
+                        errs.append(f"review.html 缺少错题本接入：{s}")
+                for bad in ["eeybslhshcldirbgoviz", "drowsyhse.com", "sb_secret_",
+                            "service_role", "csp-wrongbook", "csp-day"]:
+                    if bad in rh:
+                        errs.append(f"review.html 残留 CSP/生产凭据硬编码：{bad}")
+                i_ctx, i_wb = rh.find("window.DROWSY_CERT"), rh.find("course-wrongbook.js")
+                if not (0 <= i_ctx < i_wb):
+                    errs.append("review.html 证书上下文必须注入在错题本脚本之前")
+            if os.path.exists(qi_p):
+                try:
+                    with io.open(qi_p, "r", encoding="utf-8") as f:
+                        qi = json.load(f)
+                    if qi.get("cert") != slug or not qi.get("count"):
+                        errs.append("错题回填索引 cert/count 不正确")
+                    for day, rec in (qi.get("questions") or {}).items():
+                        if len(rec.get("o") or []) != 4 or not isinstance(rec.get("a"), int) or not (0 <= rec["a"] <= 3):
+                            errs.append(f"错题回填索引 Day {day} 选项/答案格式错误")
+                        if not rec.get("q") or len(rec.get("w") or []) != 2:
+                            errs.append(f"错题回填索引 Day {day} 缺少题干或中英解析")
+                except Exception as e:
+                    errs.append("错题回填索引 JSON 解析失败：" + str(e))
+            if os.path.exists(cat) and 'href="review.html"' not in ch:
+                errs.append("目录页缺少错题本入口")
 
         if os.path.exists(cat):
             for s in ["assets/course-heatmap.js", "assets/course-pathmap.js",

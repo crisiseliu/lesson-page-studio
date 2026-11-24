@@ -1,4 +1,4 @@
-# 游戏化注入层规范 · Engagement Spec（v2.4）
+# 游戏化注入层规范 · Engagement Spec（v2.5）
 
 > 回溯 2026-11-23 CSP 站上线的三项效果，把它们沉淀为「新证书课程包构建时一键产出」的可复用能力。
 > 维护：Louis LIu
@@ -20,6 +20,11 @@
 **一键生成图片分享卡**（题目 + 作答结果 + 网址 + 可扫码二维码），同步回灌技能包，
 成为第 4 个随课程包一键产出的资产。二维码完全离线生成，不引入任何服务端或凭据。
 
+**v2.5 增补**：2026-11-24 生产站上线「错题本 + 间隔复习」（CSP HANDOVER §41），
+同日回灌技能包：构建课程包时一键产出 `review.html` + `course-wrongbook.js` +
+`quiz_index.json` + 可选 `wrongbook_cert.sql`。做错的题自动收集，按 1 / 3 / 7 天重考，
+答对三次毕业；默认纯本地零凭据，可选按 `(owner_id, cert_slug, item_id)` 跨设备同步。
+
 **红线**：不修改、不重新生成、不引用生产站的 `heatmap.js` / `pathmap.js` / `daily.html`；
 三件套自包含在新课程的 `<site>/<slug>/` 子目录，站点根 `assets/` 一行都不动。
 
@@ -30,12 +35,17 @@
 ├── day1.html … dayN.html           课程页（v2.1 起，本次只修 STUDY_DAYS_KEY）
 ├── index.html                      课程目录（注入完整上下文 + 三件套引用 + 每日一题入口）
 ├── daily.html                      ← 新增·效果 2
+├── review.html                     ← v2.5 新增·效果 4 错题本（统计 / tab / 重做）
 └── assets/
     ├── course-heatmap.js           ← 新增·效果 1（零构建 token）
     ├── course-pathmap.js           ← 新增·效果 3（零构建 token）
     ├── qrcode.min.js               ← v2.4 新增·离线 QR 编码器（node-qrcode MIT 单文件打包）
     ├── course-daily-share.js       ← v2.4 新增·图片分享卡脚本（与生产站共用同一份）
-    └── data/daily_questions.json   ← 新增·效果 2 题池（从 cert.json 的 blocks[].scenario 提取）
+    ├── course-wrongbook.js         ← v2.5 新增·效果 4 采集 + SRS + 可选同步（零构建 token）
+    ├── wrongbook_cert.sql          ← v2.5 新增·可选云同步迁移（独立新表，绝不改 CSP 生产表）
+    └── data/
+        ├── daily_questions.json    ← 新增·效果 2 题池（从 cert.json 的 blocks[].scenario 提取）
+        └── quiz_index.json         ← v2.5 新增·效果 4 回填索引（按页面原始选项顺序）
 ```
 
 模板在 `curriculum/engagement/templates/`：
@@ -47,6 +57,9 @@
 | `course-daily.html` | 每日一题页（构建期替换 `{{TOKEN}}`；含图片分享卡按钮与三份脚本引用） |
 | `qrcode.min.js` | **v2.4**：`QRCodeLite.create(text)` → `{modules:{size,data}}`，纯浏览器、零依赖 |
 | `course-daily-share.js` | **v2.4**：`DrowsyDailyShare.open(data)` → 同步 PNG + 预览弹层，读 `DROWSY_DAILY_CONFIG` |
+| `course-wrongbook.js` | **v2.5**：错题采集 + 1/3/7 天 SRS + 可选云同步，运行时读 `window.DROWSY_WRONGBOOK_CONFIG` |
+| `course-review.html` | **v2.5**：错题本页模板（构建期替换 `{{TOKEN}}`，含统计 / 筛选 / 重做） |
+| `wrongbook_cert.sql` | **v2.5 可选**云同步迁移（独立 `user_wrongbook` 表，绝不改 CSP 生产表） |
 | `daily_challenge_cert.sql` | **可选**云统计迁移（独立新表，绝不改 CSP 生产 `daily_answers`） |
 
 `qrcode.min.js` 由 `tools/_make_qrcode_bundle.js`（CSP 项目侧）从 `node-qrcode@1.5.4`
@@ -63,7 +76,7 @@ python curriculum/build_engagement.py --cert <cert.json> --site <站点根目录
 ## 3. 参数化契约：`window.DROWSY_CERT`
 
 目录页 `<script>` 注入一个 JSON 对象（由 `build_engagement.build_context()` 生成），
-**两份 JS 的所有配置都来自它**，因此同一份脚本服务任意证书、无需为每个课程改代码。
+**热力图 / 关卡地图 / 错题本三份 JS 的证书上下文都来自它**，因此同一份脚本服务任意证书、无需为每个课程改代码。
 
 | 字段 | 类型 | 默认 | 作用 |
 |---|---|---|---|
@@ -81,8 +94,8 @@ python curriculum/build_engagement.py --cert <cert.json> --site <站点根目录
 | `dailyPoolUrl` | string | `assets/data/daily_questions.json?v=1` | 题池相对路径 |
 | `domainCount` | int | domains 数 | 体检/报告用 |
 
-**顺序要求**：`window.DROWSY_CERT` 必须在两个 JS 之前注入（`verify_curriculum.py` 会断言）。
-两个 JS 都放在 `</body>` 前；热力图脚本在前、地图脚本在后，保证 DOM 插入顺序为
+**顺序要求**：`window.DROWSY_CERT` 必须在三个 JS 之前注入（`verify_curriculum.py` 会断言）。
+热力图与地图 JS 放在 `</body>` 前；热力图脚本在前、地图脚本在后，保证 DOM 插入顺序为
 「热力面板 → 工具条 → 地图 → 原网格」。
 
 ### 3b. 图片分享卡上下文：`window.DROWSY_DAILY_CONFIG`（v2.4）
@@ -105,6 +118,25 @@ python curriculum/build_engagement.py --cert <cert.json> --site <站点根目录
   卡片渲染成「等你来挑战」邀请态（金色），答题后才显示绿/红结果条。
 - **答案不上卡**：四个选项一律不标对错，只显示作答结果，保留传播悬念。
 
+### 3c. 错题本上下文：`window.DROWSY_WRONGBOOK_CONFIG`（v2.5）
+
+`build_engagement.wrongbook_inject()` 把配置注入每节课页与 `daily.html`，
+`render_review()` 把同一份配置注入 `review.html`。**slug 不写进配置**：脚本运行时从
+`window.DROWSY_CERT` → `window.DROWSY_DAILY_CONFIG` → `<meta name="drowsy-cert">` 依次读取，
+因此 `course-wrongbook.js` 是零构建 token 的纯通用脚本。
+
+| 字段 | 默认 | 作用 |
+|---|---|---|
+| `intervals` | `[1,3,7]` | 三个复习间隔（天），对应 level 0/1/2；第三次答对毕业 |
+| `sync` | `null` | `null` = 纯本地；对象 `{url, anonKey}` = 开启 `user_wrongbook` 跨设备同步 |
+| `indexUrl` | `assets/data/quiz_index.json?v=1` | 首次回填索引的相对路径 |
+
+- `review.html` 顺序：`DROWSY_CERT` → `WRONGBOOK_CONFIG` → `/assets/sync.js` →
+  `course-wrongbook.js` → 页面主脚本（同步脚本必须先于错题脚本，否则会话拿不到）。
+- 课页已有 `/assets/sync.js`，注入片段不再重复引入；`daily.html` 没有，注入片段会补一行。
+- `sync` 只在 `engagement.wrongbook.sync=true` 且凭据合法时注入；key 来自用户 cert.json，
+  构建器拒绝 `secret` / `service_role`，技能包本身不含任何密钥。
+
 ## 4. cert.json 的 `engagement` 配置
 
 `scaffold_cert.py` 自动生成下列骨架；老 cert.json 没有该字段时默认全开（向后兼容）。
@@ -125,17 +157,26 @@ python curriculum/build_engagement.py --cert <cert.json> --site <站点根目录
     "pool_label_zh": "本课程内容 / Course lesson",
     "pool_label_en": "课程练习题 / Course practice",
     "share_url": "https://…/<slug>/daily.html",   // v2.4：二维码落地页，省略则用 canonical
-    "supabase": {                  // 仅 stats=true 时必填
-      "url": "https://xxx.supabase.co",
-      "anon_key": "sb_publishable_…",   // 只允许 anon / publishable
-      "submit_fn": "daily_challenge_submit_cert",
-      "stats_fn": "daily_challenge_stats_cert"
+      "supabase": {                  // 仅 stats=true 时必填
+        "url": "https://xxx.supabase.co",
+        "anon_key": "sb_publishable_…",   // 只允许 anon / publishable
+        "submit_fn": "daily_challenge_submit_cert",
+        "stats_fn": "daily_challenge_stats_cert"
+      }
+    },
+    "wrongbook": {
+      "enabled": true,               // false = 只关错题本（或 build 时加 --no-wrongbook）
+      "intervals": [1, 3, 7],        // 可选；三个正整数，第三次答对毕业
+      "sync": false,                 // true = 跨设备同步（先执行 wrongbook_cert.sql）
+      "supabase": {                  // 可选；省略则复用 daily.supabase
+        "url": "https://xxx.supabase.co",
+        "anon_key": "sb_publishable_…"   // 只允许 anon / publishable
+      }
     }
   }
-}
 ```
 
-## 5. 三项效果的实现口径（与生产站对齐）
+## 5. 四项效果的实现口径（与生产站对齐）
 
 ### 1 热力图 + streak 冻结 + 徽章
 - 数据 = 本地 `<slug>-dayN-checks` ∪ `DrowsySync.progressList()` 中 `cert === <slug>` 的 `days`；
@@ -185,6 +226,27 @@ python curriculum/build_engagement.py --cert <cert.json> --site <站点根目录
   不依赖 `.masonry` 类名（生产脚本硬编码了它）。
 - 移动端宽度取 `.pm-track` 内容宽（`outerW - 2*chPadX`），否则右侧溢出约 8px（ARCHIVE 坑 54）。
 
+### 4 错题本 + 1/3/7 天间隔复习（v2.5）
+
+- **采集点两处**（课程包没有生产站的五题复盘 `.rqBtn`，但脚本保留兼容）：
+  - 课页 `#checkBtn`：选项 / 题面从 `#quiz` 现场抽取；正确项优先读按钮的 `data-answer`，
+    解析读 `data-why-zh` / `data-why-en`（课程包模板已带），再回退反馈文本正则。
+    题面取 `#quiz` 前同 section 的最多两个 `<p>`（中英主次），跳过「自编练习题 / About these questions」提示。
+  - 每日一题 `#dqSubmit`：正确项取 `#dqOpts .right`，所选取 `.sel`（刷新后已答态回退 `.wrong`），
+    itemId 用 `daily-YYYY-MM-DD`，题面拼 `#dqQ` + `#dqQe`。
+  - 所有采集都在 `setTimeout(0)` 后读 DOM，不改原判分逻辑；答对不入本。
+- **首次回填**：`quiz_index.json` 由 `build_wrongbook_index()` 从 `blocks[].scenario` 生成，
+  选项顺序**必须是课页原始顺序**（不能复用每日一题的洗牌顺序，否则历史答案对错判反）；
+  与 `<slug>-dayN-quiz` 里的历史字母比对，只收错的。回填标记 `<slug>-wrongbook-backfilled-v1`，只跑一次。
+- **SRS**：错 → level 0 / `intervals[0]` 天后；答对 → level 1 / `intervals[1]` 天 →
+  level 2 / `intervals[2]` 天 → level 3 毕业（`due=null`）；中途答错回 level 0 重新计时。
+  「待复习」tab 只显示 `due <= now` 的条目，所以**刚答错的题在「学习中」tab**，这是预期行为。
+- **页面**：`review.html` 四统计卡（待复习 / 学习中 / 已掌握 / 累计）+ 四筛选 tab，
+  卡片含题目、四选项（错项红 / 对项绿）、中英解析、重做 / 回本课 / 移除；重做即时更新 SRS。
+- **存储与同步**：本地 `<slug>-wrongbook-items`（itemId → record），零登录可用；
+  仅显式开启 `sync` 时走 `user_wrongbook` 表，按 `(owner_id, cert_slug, item_id)` upsert，
+  last-write-wins（比较 `updated_at`），2s 防抖 + `pagehide` 兜底；未登录静默降级。
+
 ## 6. 键隔离清单
 
 | 键 | 作用域 | 说明 |
@@ -194,6 +256,8 @@ python curriculum/build_engagement.py --cert <cert.json> --site <站点根目录
 | `<slug>-study-days` | **课程级** | 自然日数组，热力图 streak / 冻结卡（v2.3 修正） |
 | `<slug>-daily-<date>` | 课程级 | 每日一题已答状态 |
 | `<slug>-catalog-view` | 课程级 | 关卡地图/网格视图记忆 |
+| `<slug>-wrongbook-items` | **课程级** | 错题本全部记录（itemId → SRS 状态），v2.5 |
+| `<slug>-wrongbook-backfilled-v1` | **课程级** | 历史错题回填标记，只跑一次，v2.5 |
 | `drowsy_device_id` | 全站 | 仅云统计模式用于防刷（与生产同口径） |
 
 云同步 `DrowsySync.progressList()` 按 `cert === <slug>` 过滤；`slug === 'csp'` 时额外兼容
@@ -231,18 +295,24 @@ python curriculum/build_engagement.py --cert <cert.json> --site <站点根目录
 | 11 | QR 黑块用 `Math.ceil(cell)+0.4` 画、步进却是小数 `cell` → 相邻模块互相重叠约 0.6px，矩阵被侵蚀 | **肉眼看二维码完全正常，但 RS 解码报 `locator degree does not match number of roots`**。cell 必须取整数、黑块严格 `cell×cell`、留白 4 模块、整体在方框内居中 |
 | 12 | 分享卡脚本在 IIFE 顶层 `var CFG = window.DROWSY_DAILY_CONFIG` 缓存 → 配置 script 排在其后加载时拿到空对象 | 品牌静默回退成通用 `DAILY LEARNING`（二维码 URL 因主脚本显式传入而不受影响，故极易漏测）。改 `getCfg()` 在 `open()`/`build()` 时动态读取，并把配置 script 前置 |
 | 13 | 二维码只留 2 模块白边、外围是米色背景 → 扫码容错低 | 4 模块标准留白 + 白色圆角底；**E2E 必须用真实解码器反解 URL**，只断言「画了个方块」不算验证 |
+| 14 | 回填索引用了每日一题洗牌后的选项顺序 → 历史答案对错判反 | `build_wrongbook_index()` 必须用 `blocks[].scenario.options` 原始顺序，与课页 `#quiz` 一致 |
+| 15 | 错题脚本顶层写死 `slug` / Supabase URL+key → 多课程串数据、泄漏凭据 | slug 运行时从 DROWSY_CERT / DAILY_CONFIG / meta 读；sync 配置按课程注入，模板零 token |
+| 16 | 刚答错的题不在「待复习」tab 就以为采集失败 | `due` = 1 天后，先出现在「学习中」tab；E2E 必须切 tab 再断言（v2.5 实测踩过） |
+| 17 | `review.html` 把 `/assets/sync.js` 放在 `course-wrongbook.js` 之后 → 云同步永远 guest | 固定顺序：DROWSY_CERT → WRONGBOOK_CONFIG → sync.js → wrongbook.js → 主脚本 |
+| 18 | 回填是异步 fetch，测试在它完成前写 localStorage → 被随后的 `save()` 用旧内存对象覆盖成 `{}` | E2E 用 `addInitScript` 在文档脚本前注入种子，或先 `await WrongBook.ready`（CSP 生产 ARCHIVE 坑 56） |
 
-## 9. 验收（v2.4 实测基线）
+## 9. 验收（v2.5 实测基线）
 
 | 检查 | 结果 |
 |---|---|
-| `python scripts/selftest.py` | **42/42**（原 35 项 + 7 项图片分享卡断言） |
+| `python scripts/selftest.py` | **54/54**（原 42 项 + 12 项错题本断言：产物 / SRS / 零凭据 / 回填索引 / `--no-wrongbook` / anon key 注入与 secret 拦截） |
 | `verify_curriculum.py`（demo 10 课） | PASS（页数/canonical/键隔离/DOM/三件套/**分享卡资源 + 全局入口 + 零凭据**/题池/无 CSP 硬编码） |
 | 生产站真实浏览器 E2E | **29/29**：分享卡按钮常驻 / 同步 PNG 1080×1440 / 品牌与 URL 参数 / 保存下载 / × 与 Esc 关闭 / 答题闭环 / 移动端 390px 无溢出 / 零 pageerror |
 | 课程包真实浏览器 E2E | **18/18**：一键生成的 demo 课程里分享卡可用、品牌为 `DEMO DAILY LEARNING`、下载名 `demo-challenge-*.png`、二维码指向**本课程** daily.html |
 | **二维码真实反解** | 两套 E2E 均用 `qrcode-reader` 从生成的 PNG 反解，分别得到 `https://www.drowsyhse.com/daily.html` 与 `http://127.0.0.1:8000/demo/daily.html`，完全一致 |
-| 分支验证 | `--no-engagement` 降级 / 云统计模式 / secret key 拦截 / 自定义 `share_url` 均通过 |
-| 生产站改动 | `daily.html` 新增分享卡按钮与 3 处脚本引用；`heatmap.js` / `pathmap.js` / 迁移 006 **未动** |
+| **错题本课程包真实浏览器 E2E** | **29/29**：采集（课内测验 / 每日一题）/ 首次回填 / 1→3→7→毕业 / 答错回退 / 移除 / 四 tab / 中英解析 / 移动端无溢出 / 零 pageerror |
+| 分支验证 | `--no-engagement` 降级 / `--no-wrongbook` 单关 / 云统计与错题云同步模式 / secret key 拦截 / 自定义 `share_url` 均通过 |
+| 生产站改动 | `daily.html` 新增分享卡按钮与 3 处脚本引用；`heatmap.js` / `pathmap.js` / 迁移 006 **未动**。错题本 v1.0.0 于 2026-11-24 独立上线（`review.html` + `wrongbook.js` + 迁移 008，线上探针 48/48），技能包不引用、不改动生产脚本 |
 
 ## 10. 版本纪律
 
@@ -251,8 +321,11 @@ python curriculum/build_engagement.py --cert <cert.json> --site <站点根目录
 - `course-daily-share.js` 与生产站 `assets/daily_share_card.js` **必须是同一份内容**；
   改完一边要 `cp` 同步另一边，并同时重跑两套 E2E。
 - 目录页引用 `assets/course-heatmap.js?v=1` / `assets/course-pathmap.js?v=1`；
-  每日一题页引用 `assets/qrcode.min.js?v=1` / `assets/course-daily-share.js?v=1`。
+  每日一题页引用 `assets/qrcode.min.js?v=1` / `assets/course-daily-share.js?v=1`；
+  课页 / 每日一题页 / `review.html` 引用 `assets/course-wrongbook.js?v=1`。
   模板大改时统一 bump 这些 `?v=`，全站只允许一个版本。
+- `course-wrongbook.js` 与生产站 `assets/wrongbook.js` **不要求字节一致**（前者零 token、
+  按课程参数化，后者 CSP 专用含站点配置），但 SRS 口径与数据表必须一致；任一侧改间隔规则要同步评估另一侧。
 - 题池 `?v=` 由 `daily.pool_version` 控制；CDN 有缓存，线上比对带 `?cb=<随机数>` 穿透。
 
 ---

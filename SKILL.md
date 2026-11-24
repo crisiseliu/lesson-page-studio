@@ -1,7 +1,7 @@
 ---
 name: lesson-page-studio
-description: 在既有「单页自包含」学习站模板上生产新课页面、分享卡与宣传海报，并发布到 EdgeOne Pages 与 GitHub/Vercel；v2.0 起支持「多证书课程包」——给证书名 + 专业方向 + 领域权重，即可脚手架出全年课程骨架、批量构建课程页与目录页，并注入站点首页与既有课程卡并列展示；v2.3 起构建课程包时【一键携带游戏化三件套】——热力图 / streak 冻结 / 成就徽章、每日一题（中英对照 + Wordle 战报）、关卡地图（蛇形路径 / 章节分段 / Boss 关），自包含零改生产站；v2.4 起每日一题可【一键生成图片分享卡】（题目 + 作答结果 + 网址 + 可扫码二维码），零外部依赖、零凭据。适用于：给现有学习站新增一课/一天、在同一模板上开新科目系列、新增一整套证书课程、重做某天海报或学习记录卡、批量补发漏课。触发词：新增一课、加一天课程、生成学习页面、生成海报、学习记录卡、补课、新证书课程、课程包、学习网站新内容、游戏化、热力图、每日一题、关卡地图、lesson page。
-version: 2.4.0
+description: 在既有「单页自包含」学习站模板上生产新课页面、分享卡与宣传海报，并发布到 EdgeOne Pages 与 GitHub/Vercel；v2.0 起支持「多证书课程包」——给证书名 + 专业方向 + 领域权重，即可脚手架出全年课程骨架、批量构建课程页与目录页，并注入站点首页与既有课程卡并列展示；v2.3 起构建课程包时【一键携带游戏化三件套】——热力图 / streak 冻结 / 成就徽章、每日一题（中英对照 + Wordle 战报）、关卡地图（蛇形路径 / 章节分段 / Boss 关），自包含零改生产站；v2.4 起每日一题可【一键生成图片分享卡】（题目 + 作答结果 + 网址 + 可扫码二维码），零外部依赖、零凭据；v2.5 起课程包再自带【错题本 + 1/3/7 天间隔复习】——做错自动收集、答对三次毕业、中英解析、跨设备同步可选。适用于：给现有学习站新增一课/一天、在同一模板上开新科目系列、新增一整套证书课程、重做某天海报或学习记录卡、批量补发漏课。触发词：新增一课、加一天课程、生成学习页面、生成海报、学习记录卡、补课、新证书课程、课程包、学习网站新内容、游戏化、热力图、每日一题、关卡地图、错题本、间隔复习、lesson page。
+version: 2.5.0
 agent_created: true
 ---
 
@@ -31,7 +31,7 @@ python scripts/preflight.py --config <项目根目录>/lesson-studio.json
 **第一次用先跑技能自检**（用 demo，不碰你的项目）：
 
 ```bash
-python scripts/selftest.py          # 42 项断言：克隆 + 替换 + 体检 + 课程包 + 游戏化三件套 + 图片分享卡
+python scripts/selftest.py          # 54 项断言：克隆 + 替换 + 体检 + 课程包 + 游戏化三件套 + 图片分享卡 + 错题本
 ```
 
 `preflight.py` 输出两项结论：
@@ -153,23 +153,24 @@ cd <site_dir> && PAGES_SOURCE=skills edgeone pages deploy -n <项目名> -a over
 - `scripts/_config.py` —— 配置读取（命令行 > 配置 > 内置默认）
 - `scripts/config.example.json` —— 配置模板，复制改名后填
 - `curriculum/` —— **多证书课程包模块**（v2.0 新增，见下）
-- `curriculum/build_engagement.py` —— **v2.4 游戏化注入层构建器**（题池 + 三件套 + 图片分享卡 + 目录页上下文）
-- `curriculum/engagement/templates/` —— 参数化热力图 / 关卡地图 / 每日一题页模板 + 可选云统计迁移
+- `curriculum/build_engagement.py` —— **v2.5 游戏化注入层构建器**（题池 + 三件套 + 图片分享卡 + 错题本 + 目录页上下文）
+- `curriculum/engagement/templates/` —— 参数化热力图 / 关卡地图 / 每日一题页 / 错题本页模板 + 可选云统计与错题同步迁移
 - `curriculum/engagement/templates/qrcode.min.js` —— **v2.4**：node-qrcode(MIT) 离线单文件打包，浏览器端同步生成二维码
 - `curriculum/engagement/templates/course-daily-share.js` —— **v2.4**：与生产站共用的图片分享卡脚本（零构建 token）
 - `references/page_spec.md` —— 页面结构、锚点位置、存储键清单
-- `references/engagement_spec.md` —— **v2.4 游戏化契约**：DROWSY_CERT 字段、口径、图片分享卡、云统计升级、坑
+- `references/engagement_spec.md` —— **v2.5 游戏化契约**：DROWSY_CERT 字段、口径、图片分享卡、错题本 / 间隔复习、云同步升级、坑
 - `references/curriculum_authoring.md` —— 课程内容创作标准（数值纪律/双语纪律/质检口径）
 - `references/poster_spec.md` —— 海报 JSON 字段、设计规范、常见坑
 - `references/deploy_runbook.md` —— 发布命令、验证、故障排查、回滚
 - `assets/poster.json` —— 海报配置样板
 - `demo/` —— 可跑的示例站（day1.html + index.html）、示例配置与 **demo-cert.json**（2 块=10 课）
 
-## 多证书课程包（v2.4 · 给证书名 + 专业方向即可开工，一键带上 1/2/3 + 图片分享卡）
+## 多证书课程包（v2.5 · 给证书名 + 专业方向即可开工，一键带上 1/2/3 + 分享卡 + 错题本）
 
 适用：在现有学习站上**新增一门完整的证书课程**（全年骨架 + 页面 + 目录 + 首页并列卡片），
 与 CSP 课程卡同层级展示。**v2.3 起第 3 步构建会同时产出 2026-11-23 上线的三项游戏化效果；
-v2.4 起每日一题再自带「一键生成图片分享卡」**（网址 + 可扫码二维码）。
+v2.4 起每日一题自带「一键生成图片分享卡」（网址 + 可扫码二维码）；
+v2.5 起再自带「错题本 + 1/3/7 天间隔复习」**（做错自动收集、答对三次毕业）。
 无需额外命令、无需手工拷贝脚本、无需改生产站。详细用法与数据模型见 `curriculum/README.md`，
 参数化契约见 `references/engagement_spec.md`。
 
@@ -181,7 +182,7 @@ python curriculum/scaffold_cert.py --slug <slug> --name-zh "…" --name-en "…"
 # 2) 填内容：按 references/curriculum_authoring.md 的标准逐块把 __TODO__ 换成真实内容
 #    （这一步是内容工程，AI 按官方蓝图逐块撰写，数值必须核对官方来源）
 
-# 3) 校验 + 构建（一条命令产出：dayN.html + 目录 + 游戏化三件套；校验不过不写盘）
+# 3) 校验 + 构建（一条命令产出：dayN.html + 目录 + 游戏化三件套 + 错题本；校验不过不写盘）
 python curriculum/build_curriculum.py --cert <slug>.json --site <站点> --check
 python curriculum/build_curriculum.py --cert <slug>.json --site <站点>
 #    -> <站点>/<slug>/daily.html
@@ -190,9 +191,13 @@ python curriculum/build_curriculum.py --cert <slug>.json --site <站点>
 #    -> <站点>/<slug>/assets/data/daily_questions.json（2 每日一题，题源 = 各块 scenario）
 #    -> <站点>/<slug>/assets/qrcode.min.js            （2 图片分享卡 · 离线 QR 编码器 MIT）
 #    -> <站点>/<slug>/assets/course-daily-share.js   （2 图片分享卡 · 与生产站共用脚本）
-#    想退回纯 v2.1 产物：加 --no-engagement
+#    -> <站点>/<slug>/review.html                    （4 错题本 + 1/3/7 天间隔复习）
+#    -> <站点>/<slug>/assets/course-wrongbook.js     （4 采集器 / SRS / 可选同步，零构建 token）
+#    -> <站点>/<slug>/assets/data/quiz_index.json    （4 首次回填历史错题索引）
+#    -> <站点>/<slug>/assets/wrongbook_cert.sql      （4 可选云同步迁移，独立于 CSP 生产表）
+#    想退回纯 v2.1 产物：加 --no-engagement；只要三件套不要错题本：加 --no-wrongbook
 
-# 4) 体检（v2.4 也会校验三件套 + 分享卡资源、题池口径、CSP 硬编码残留与密钥）+ 5) 首页并列卡片
+# 4) 体检（v2.5 也会校验三件套 + 分享卡 + 错题本资源、题池/索引口径、CSP 硬编码残留与密钥）+ 5) 首页并列卡片
 python curriculum/verify_curriculum.py --cert <slug>.json --site <站点>
 python curriculum/inject_cert_card.py --index <站点>/index.html --slug <slug> \
   --href <slug>/index.html --name-zh "…" --name-en "…" --desc-zh "…" --desc-en "…" --color "#7A4BA8"
@@ -213,7 +218,8 @@ python curriculum/inject_cert_card.py --index <站点>/index.html --slug <slug> 
   - **2 每日一题**：从每个块的 `scenario` 四选一情景题自动建池（中文主显 + 英文次级 + 英文解析折叠 `<details>`），按块号种子确定性洗牌选项；UTC 取模一天一题、已答状态 `<slug>-daily-<date>`、Wordle 式战报复制。**默认纯本地模式、零凭据**；要开全网正确率按 `references/engagement_spec.md` 配 `engagement.daily.stats` 并执行独立迁移（绝不改 CSP 生产表）。
   - **2b 图片分享卡（v2.4）**：每日一题页常驻「生成分享卡」按钮，未答题也能生成「来挑战」邀请卡；点击即同步产出 1080×1440 PNG（题目 + 四选项 + 作答结果 + 网址 + 二维码），预览弹层可保存图片 / 复制文字战报 / 长按保存。**答案不上卡**（只显示结果，不标哪个选项对）。二维码由随包落盘的 `qrcode.min.js` 按 `share_url`（默认 `<站点>/<slug>/daily.html`）运行时生成，不预置图片、不依赖 CDN / Node / Python 库、不含任何凭据。
   - **3 关卡地图**：运行时只读既有 `.tile` 生成蛇形路径第二视图，按【领域】着色分段（章节数 = 领域数）、已完成彩色实线 + ✓、当前呼吸光圈 + START、Boss（最后两课 A/B）、双视图记忆 `<slug>-catalog-view`；原网格 DOM 与门禁捕获完整保留。
-  - 三份 JS **零构建 token**，全部从目录页 `window.DROWSY_CERT` / 页内 `window.DROWSY_DAILY_CONFIG` 读配置。产物自包含在 `<站点>/<slug>/assets/`，不碰站点根 `assets/`、不改已上线的 CSP `heatmap.js` / `pathmap.js` / `daily.html`。
+  - **4 错题本 + 间隔复习（v2.5）**：做错的题自动进 `review.html`——课页 `#checkBtn`（读 `data-answer` / `data-why-*`）、每日一题 `#dqSubmit` 两处现场采集，首次打开还用 `quiz_index.json` 回填本机历史答错记录。答错 → 1 天后重考；答对 → 3 天 → 7 天 → 毕业，中途答错回到 1 天。四统计卡 + 四筛选 tab + 重做 / 回本课 / 移除，中英解析；本地键 `<slug>-wrongbook-items` 按课程隔离，**默认纯本地零凭据**。可选 `engagement.wrongbook.sync=true`（复用 `daily.supabase` 或单独配置 anon key）开启跨设备同步，走独立 `user_wrongbook` 表 `(owner_id, cert_slug, item_id)`，RLS 仅本人；`--no-wrongbook` 可单独关闭。
+  - 四份 JS **零构建 token**，全部从目录页 `window.DROWSY_CERT` / 页内 `window.DROWSY_DAILY_CONFIG` / `window.DROWSY_WRONGBOOK_CONFIG` 运行时读配置。产物自包含在 `<站点>/<slug>/assets/`，不碰站点根 `assets/`、不改已上线的 CSP `heatmap.js` / `pathmap.js` / `daily.html` / `wrongbook.js`。
   - **题池口径（沿用 2026-11-23 定论）**：只用与实际考试内容相关的题，不出现学习方法/备考策略/目的类；某块属于此类就写进 `engagement.daily.exclude_blocks`。`engagement.enabled=false` 或 `--no-engagement` 可整体关闭三件套。
 - 填内容是主体工作量：72 块 × 双语，需分批撰写并自查（权重覆盖、数值核对），不要一次生成完就算交付。
 
@@ -230,16 +236,17 @@ python curriculum/inject_cert_card.py --index <站点>/index.html --slug <slug> 
 - [ ] 部署后各域名 200 且字节一致
 - [ ] 海报配置与帖子草稿归档到 `linkedin/dayN/`
 
-## 交付清单（课程包流程，v2.4）
+## 交付清单（课程包流程，v2.5）
 
 - [ ] cert.json 无 `__TODO__`，build --check 通过（含游戏化配置校验）
 - [ ] 领域块数占比与官方权重差 ≤3 个百分点；蓝图任务均有块覆盖
 - [ ] 数值逐个核对过官方来源；题目已带"官方不公开真题"提示
-- [ ] verify_curriculum 全通过（页数/canonical/键隔离/DOM **+ 三件套 + 分享卡资源 + 题池口径 + 无 CSP 硬编码**）
+- [ ] verify_curriculum 全通过（页数/canonical/键隔离/DOM **+ 三件套 + 分享卡 + 错题本资源 + 题池/索引口径 + 无 CSP 硬编码**）
 - [ ] 浏览器抽查 1–2 课：判题、导出卡 1350×1813、手机无溢出
 - [ ] **浏览器抽查目录页**：热力格数 = 总课数、地图节点数 = 总课数、章节数 = 领域数、Boss A/B、双视图可切换且刷新后记忆、无横向溢出、零 pageerror
 - [ ] **浏览器抽查 daily.html**：题干/选项/中文解析主显、英文原文折叠、判题结果、战报复制、刷新不重答
 - [ ] **浏览器抽查图片分享卡**：点击即出 1080×1440 PNG、二维码可扫码且指向本课程 daily.html、网址印刷正确、答案未泄露、下载与移动端正常
+- [ ] **浏览器抽查错题本**：课页答错自动入本、`review.html` 中英解析与对错标色、答对 3 次毕业、中途答错回 1 天、移除与 tab 切换、移动端无溢出；若启用云同步，已执行 `wrongbook_cert.sql` 且只放 anon key
 - [ ] 每日一题题池已按考点口径复核；如启用云统计，已执行独立迁移且只放 anon key
 - [ ] 首页并列卡片注入且幂等（重复执行仅 1 张）
 - [ ] 如实告知：云同步依赖站点 `sync.js`（缺失则退化本机）；每日一题默认本地模式

@@ -100,6 +100,7 @@ def validate(cert, check_engagement=True):
                 if not pool["questions"]:
                     errs.append("engagement: 题池为空（blocks[].scenario 均不可用）")
                 BE.stats_config(cert, eng)      # 缺凭据 / 误用 secret 直接报错
+                BE.wrongbook_config(cert, eng)  # v2.5：错题本同步凭据校验（默认纯本地）
                 BE.build_context(cert, eng, total)
         except Exception as e:
             errs.append("engagement: " + str(e))
@@ -236,7 +237,7 @@ def sec_refs(cert):
   </section>"""
 
 
-def render_page(cert, blk, lesson_idx, n, total):
+def render_page(cert, blk, lesson_idx, n, total, wb=None):
     t_zh, t_en = TYPES[lesson_idx % 5]
     title_zh = f"{blk['zh']} · {t_zh}"
     title_en = f"{blk['en']} · {t_en}"
@@ -268,6 +269,7 @@ def render_page(cert, blk, lesson_idx, n, total):
         "{{NAV_TOP}}": nav_top,
         "{{NAV_BOTTOM}}": nav_bottom,
         "{{SECTIONS}}": sections,
+        "{{WRONGBOOK_INJECT}}": BE.wrongbook_inject(cert, wb) if wb else "",
     }
     with io.open(TEMPLATE, "r", encoding="utf-8") as f:
         out = f.read()
@@ -298,7 +300,7 @@ def nav_blocks(n, total):
     return top, bottom
 
 
-def render_catalog(cert, total, ctx=None):
+def render_catalog(cert, total, ctx=None, wb=None):
     blocks = cert["blocks"]
     domains = {d["code"]: d for d in cert.get("domains", [])}
     dom_index = {d["code"]: i for i, d in enumerate(cert.get("domains", []))}
@@ -322,6 +324,7 @@ def render_catalog(cert, total, ctx=None):
         for i, d in enumerate(cert.get("domains", [])))
     # v2.3：目录页注入完整证书上下文 + 游戏化三件套；ctx=None 时保持 v2.1 原样
     daily_link = (' · <a href="daily.html">⚡ 每日一题 / Daily Challenge</a>' if ctx else '')
+    review_link = (' · <a href="review.html">📕 错题本 / Wrong Book</a>' if wb else '')
     ctx_json = (BE.js_literal(ctx) if ctx
                 else "{ slug: '" + cert['slug'] + "', total: " + str(total) + " }")
     eng_scripts = ('<script src="assets/course-heatmap.js?v=1"></script>\n'
@@ -365,7 +368,7 @@ footer{{text-align:center;color:var(--muted);font-size:12px;padding:24px 16px 36
   <div style="font-size:.8rem;opacity:.85">{esc(cert.get('issuer', ''))} · {esc(cert['name_en'])}</div>
   <h1>{esc(cert['name_zh'])} | Lesson Catalog</h1>
   <p>Day 1 – Day {total} · 按考试蓝图领域组织，中英双语 / Organized by blueprint domains, bilingual</p>
-  <p><a href="../index.html">← 返回首页 / Home</a>{daily_link}</p>
+  <p><a href="../index.html">← 返回首页 / Home</a>{daily_link}{review_link}</p>
 </header>
 <div class="wrap">
   <div class="legend">
@@ -410,6 +413,8 @@ def main():
     ap.add_argument("--check", action="store_true", help="只校验，不写盘")
     ap.add_argument("--no-engagement", action="store_true",
                     help="关闭 v2.3 游戏化三件套（热力图 / 每日一题 / 关卡地图），默认开启")
+    ap.add_argument("--no-wrongbook", action="store_true",
+                    help="关闭 v2.5 错题本 + 间隔复习（三件套仍保留），默认开启")
     args = ap.parse_args()
 
     with io.open(args.cert, "r", encoding="utf-8") as f:
@@ -422,6 +427,12 @@ def main():
             print("  -", e)
         sys.exit(2)
 
+    wb = None
+    if not args.no_engagement and not args.no_wrongbook:
+        _eng = BE.engagement_config(cert)
+        if _eng is not None:
+            wb = BE.wrongbook_config(cert, _eng)
+
     total = int(cert.get("days") or len(cert["blocks"]) * 5)
     if args.check:
         print(f"校验通过：{len(cert['blocks'])} 块 / {total} 课")
@@ -433,6 +444,9 @@ def main():
                 mode = "cloud" if BE.stats_config(cert, eng) else "local"
                 print(f"  + 游戏化：题池 {pool['count']} 题（跳过 {skip} 块）"
                       f" / Boss {ctx['bossDays']} / 每日一题 {mode} 模式")
+                print(f"  + 错题本：{'on' if wb else 'off'}"
+                      f"（间隔 {wb['intervals'] if wb else '—'} / 同步 "
+                      f"{'cloud' if wb and wb['sync'] else 'local'}）")
         return
 
     out_dir = os.path.join(args.site, cert["slug"])
@@ -440,7 +454,7 @@ def main():
     for bi, blk in enumerate(cert["blocks"]):
         for li in range(5):
             n = bi * 5 + li + 1
-            page = render_page(cert, blk, li, n, total)
+            page = render_page(cert, blk, li, n, total, wb)
             with io.open(os.path.join(out_dir, f"day{n}.html"), "w", encoding="utf-8", newline="\n") as f:
                 f.write(page)
 
@@ -448,19 +462,21 @@ def main():
     eng_res = None
     if not args.no_engagement:
         try:
-            eng_res = BE.build(cert, out_dir)
+            eng_res = BE.build(cert, out_dir, wb=wb)
         except Exception as e:
             print("游戏化构建失败：" + str(e))
             sys.exit(2)
     ctx = eng_res[0] if eng_res else None
     with io.open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8", newline="\n") as f:
-        f.write(render_catalog(cert, total, ctx))
+        f.write(render_catalog(cert, total, ctx, wb))
 
     print(f"构建完成：{total} 页 + 目录 -> {out_dir}")
     if eng_res:
         meta = eng_res[1]
         print(f"  + 游戏化三件套：热力图 / 关卡地图 / 每日一题"
               f"（{meta['questions']} 题，{meta['stats']} 模式，Boss {meta['bossDays']}，{meta['domains']} 领域章节）")
+        print(f"  + 错题本：{meta['wrongbook']}（回填索引 {meta['wrongbookIndex']} 题 / "
+              f"同步 {meta['wrongbookSync']} / 间隔 {wb['intervals'] if wb else '—'}）")
     print(f"首页卡片注入：python curriculum/inject_cert_card.py --index <站点>/index.html "
           f"--slug {cert['slug']} --href {cert['slug']}/index.html")
 
